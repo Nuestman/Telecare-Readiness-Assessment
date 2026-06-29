@@ -5,7 +5,11 @@
  * AGA Health Foundation Telehealth Readiness Survey API
  * OpenAPI spec version: 0.1.0
  */
+import type { Survey } from './survey';
 
-export interface HealthStatus {
-  status: string;
+export interface SurveyListResponse {
+  surveys: Survey[];
+  total: number;
+  page: number;
+  limit: number;
 }

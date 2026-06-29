@@ -3,13 +3,15 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: AGA Health Foundation Telehealth Readiness Survey API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: surveys
+    description: Survey submission and retrieval
 paths:
   /healthz:
     get:
@@ -24,6 +26,104 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /surveys:
+    post:
+      operationId: submitSurvey
+      tags: [surveys]
+      summary: Submit a survey response
+      description: Submit a completed telehealth readiness questionnaire
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SurveyInput"
+      responses:
+        "201":
+          description: Survey submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Survey"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    get:
+      operationId: listSurveys
+      tags: [surveys]
+      summary: List all survey responses
+      description: Retrieve all submitted survey responses (admin view)
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: employment_type
+          in: query
+          schema:
+            type: string
+        - name: has_ncd
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of surveys
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SurveyListResponse"
+
+  /surveys/stats:
+    get:
+      operationId: getSurveyStats
+      tags: [surveys]
+      summary: Get aggregate statistics
+      description: Returns summary statistics across all survey responses
+      responses:
+        "200":
+          description: Aggregate statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SurveyStats"
+
+  /surveys/{id}:
+    get:
+      operationId: getSurvey
+      tags: [surveys]
+      summary: Get a single survey response
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Survey response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Survey"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +134,297 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    SurveyInput:
+      type: object
+      required:
+        - age_group
+        - gender
+        - employment_type
+        - work_area
+        - has_ncd
+        - attends_followup
+        - has_smartphone
+        - has_internet
+        - heard_of_telehealth
+        - willing_to_use_telehealth
+      properties:
+        # Section 1: Demographics
+        age_group:
+          type: string
+          description: "18-25, 26-35, 36-45, 46-55, 56+"
+        gender:
+          type: string
+          description: "male, female, prefer_not_to_say"
+        employment_type:
+          type: string
+          description: "employee, contractor"
+        work_area:
+          type: string
+          description: Department or work area at the mine
+        years_at_aga:
+          type: ["string", "null"]
+          description: "less_than_1, 1_to_3, 4_to_6, 7_to_10, more_than_10"
+
+        # Section 2: Health background
+        has_ncd:
+          type: string
+          description: "yes, no, prefer_not_to_say"
+        ncd_types:
+          type: ["string", "null"]
+          description: Comma-separated list of NCDs e.g. hypertension,diabetes,asthma,obesity,other
+        other_ncd:
+          type: ["string", "null"]
+          description: Free text if other NCD specified
+        currently_on_treatment:
+          type: ["string", "null"]
+          description: "yes, no"
+        treatment_location:
+          type: ["string", "null"]
+          description: "aga_health_foundation, government_hospital, private_clinic, other"
+
+        # Section 3: Follow-up behaviour
+        attends_followup:
+          type: string
+          description: "always, sometimes, rarely, never"
+        missed_followup_reasons:
+          type: ["string", "null"]
+          description: Comma-separated reasons e.g. busy_schedule,distance,cost,forgot,feeling_well,other
+        other_missed_reason:
+          type: ["string", "null"]
+
+        # Section 4: Technology access
+        has_smartphone:
+          type: string
+          description: "yes, no"
+        smartphone_usage:
+          type: ["string", "null"]
+          description: "basic_calls_only, some_apps, frequent_apps, advanced"
+        has_internet:
+          type: string
+          description: "yes, no"
+        internet_quality:
+          type: ["string", "null"]
+          description: "poor, fair, good, very_good"
+        comfortable_with_video_call:
+          type: ["string", "null"]
+          description: "yes, no, not_sure"
+
+        # Section 5: Telehealth awareness
+        heard_of_telehealth:
+          type: string
+          description: "yes, no"
+        telehealth_sources:
+          type: ["string", "null"]
+          description: Comma-separated sources e.g. friends_family,social_media,health_worker,tv_radio,other
+        used_telehealth_before:
+          type: ["string", "null"]
+          description: "yes, no"
+
+        # Section 6: Readiness & willingness
+        willing_to_use_telehealth:
+          type: string
+          description: "1=strongly_unwilling to 5=strongly_willing Likert scale value"
+        preferred_telehealth_mode:
+          type: ["string", "null"]
+          description: "video_call, phone_call, chat_messaging, any"
+        preferred_telehealth_use:
+          type: ["string", "null"]
+          description: Comma-separated e.g. followup_reviews,ncd_management,prescription_renewal,general_advice
+        willing_for_ncd_telecare:
+          type: ["string", "null"]
+          description: "yes, no, not_sure"
+        willing_for_followup_telecare:
+          type: ["string", "null"]
+          description: "yes, no, not_sure"
+
+        # Section 7: Concerns
+        privacy_concern:
+          type: ["string", "null"]
+          description: "1=not_concerned to 5=very_concerned Likert"
+        technical_difficulty_concern:
+          type: ["string", "null"]
+          description: "1=not_concerned to 5=very_concerned Likert"
+        effectiveness_concern:
+          type: ["string", "null"]
+          description: "1=not_concerned to 5=very_concerned Likert"
+        other_concerns:
+          type: ["string", "null"]
+          description: Free text
+
+        # Section 8: Open-ended
+        suggestions:
+          type: ["string", "null"]
+          description: Any suggestions or additional comments
+
+        consent_given:
+          type: boolean
+          description: Participant has given informed consent
+
+    Survey:
+      type: object
+      required:
+        - id
+        - age_group
+        - gender
+        - employment_type
+        - work_area
+        - has_ncd
+        - attends_followup
+        - has_smartphone
+        - has_internet
+        - heard_of_telehealth
+        - willing_to_use_telehealth
+        - consent_given
+        - submitted_at
+      properties:
+        id:
+          type: integer
+        age_group:
+          type: string
+        gender:
+          type: string
+        employment_type:
+          type: string
+        work_area:
+          type: string
+        years_at_aga:
+          type: ["string", "null"]
+        has_ncd:
+          type: string
+        ncd_types:
+          type: ["string", "null"]
+        other_ncd:
+          type: ["string", "null"]
+        currently_on_treatment:
+          type: ["string", "null"]
+        treatment_location:
+          type: ["string", "null"]
+        attends_followup:
+          type: string
+        missed_followup_reasons:
+          type: ["string", "null"]
+        other_missed_reason:
+          type: ["string", "null"]
+        has_smartphone:
+          type: string
+        smartphone_usage:
+          type: ["string", "null"]
+        has_internet:
+          type: string
+        internet_quality:
+          type: ["string", "null"]
+        comfortable_with_video_call:
+          type: ["string", "null"]
+        heard_of_telehealth:
+          type: string
+        telehealth_sources:
+          type: ["string", "null"]
+        used_telehealth_before:
+          type: ["string", "null"]
+        willing_to_use_telehealth:
+          type: string
+        preferred_telehealth_mode:
+          type: ["string", "null"]
+        preferred_telehealth_use:
+          type: ["string", "null"]
+        willing_for_ncd_telecare:
+          type: ["string", "null"]
+        willing_for_followup_telecare:
+          type: ["string", "null"]
+        privacy_concern:
+          type: ["string", "null"]
+        technical_difficulty_concern:
+          type: ["string", "null"]
+        effectiveness_concern:
+          type: ["string", "null"]
+        other_concerns:
+          type: ["string", "null"]
+        suggestions:
+          type: ["string", "null"]
+        consent_given:
+          type: boolean
+        submitted_at:
+          type: string
+          format: date-time
+
+    SurveyListResponse:
+      type: object
+      required:
+        - surveys
+        - total
+        - page
+        - limit
+      properties:
+        surveys:
+          type: array
+          items:
+            $ref: "#/components/schemas/Survey"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    SurveyStats:
+      type: object
+      required:
+        - total_responses
+        - employment_type_breakdown
+        - age_group_breakdown
+        - gender_breakdown
+        - has_ncd_breakdown
+        - attends_followup_breakdown
+        - has_smartphone_rate
+        - has_internet_rate
+        - heard_of_telehealth_rate
+        - avg_willingness_score
+        - willing_for_followup_telecare_breakdown
+        - willing_for_ncd_telecare_breakdown
+      properties:
+        total_responses:
+          type: integer
+        employment_type_breakdown:
+          type: object
+          additionalProperties:
+            type: integer
+        age_group_breakdown:
+          type: object
+          additionalProperties:
+            type: integer
+        gender_breakdown:
+          type: object
+          additionalProperties:
+            type: integer
+        has_ncd_breakdown:
+          type: object
+          additionalProperties:
+            type: integer
+        attends_followup_breakdown:
+          type: object
+          additionalProperties:
+            type: integer
+        has_smartphone_rate:
+          type: number
+        has_internet_rate:
+          type: number
+        heard_of_telehealth_rate:
+          type: number
+        avg_willingness_score:
+          type: number
+        willing_for_followup_telecare_breakdown:
+          type: object
+          additionalProperties:
+            type: integer
+        willing_for_ncd_telecare_breakdown:
+          type: object
+          additionalProperties:
+            type: integer
