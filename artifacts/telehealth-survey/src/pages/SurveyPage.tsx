@@ -501,8 +501,12 @@ export default function SurveyPage() {
                               <CardRadioGroup 
                                 options={[
                                   { label: "AGA Health Foundation", value: "aga_health_foundation" },
-                                  { label: "Government hospital", value: "government_hospital" },
-                                  { label: "Private clinic", value: "private_clinic" },
+                                  { label: "Obuasi Government Hospital", value: "government_hospital" },
+                                  { label: "Bryant Mission Hospital", value: "bryant_mission" },
+                                  { label: "Neighborhood Hospital", value: "neighborhood_hospital" },
+                                  { label: "SDA Hospital", value: "sda_hospital" },
+                                  { label: "Todah Hospital", value: "todah_hospital" },
+                                  { label: "Obuasi Diagnostic", value: "obuasi_diagnostic" },
                                   { label: "Other", value: "other" }
                                 ]}
                                 value={field.value} onChange={field.onChange}
@@ -769,7 +773,7 @@ export default function SurveyPage() {
                         <MultiSelectGroup 
                           options={[
                             { label: "Follow-up/review visits", value: "followup_reviews" },
-                            { label: "NCD management (e.g. blood pressure checks)", value: "ncd_management" },
+                            { label: "NCD management (e.g. BP/Sugar checks)", value: "ncd_management" },
                             { label: "Prescription renewal", value: "prescription_renewal" },
                             { label: "General health advice", value: "general_advice" }
                           ]}
