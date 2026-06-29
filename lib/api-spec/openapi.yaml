@@ -159,16 +159,19 @@ components:
         # Section 1: Demographics
         age_group:
           type: string
-          description: "18-25, 26-35, 36-45, 46-55, 56+"
+          description: "18-30, 31-40, 41-50, 50+"
         gender:
           type: string
           description: "male, female, prefer_not_to_say"
         employment_type:
           type: string
           description: "employee, contractor"
+        contractor_company:
+          type: ["string", "null"]
+          description: Name of contractor company (required when employment_type is contractor)
         work_area:
           type: string
-          description: Department or work area at the mine
+          description: Department or work area at the mine (including 'other' with manual entry)
         years_at_aga:
           type: ["string", "null"]
           description: "less_than_1, 1_to_3, 4_to_6, 7_to_10, more_than_10"
@@ -215,7 +218,7 @@ components:
           description: "poor, fair, good, very_good"
         comfortable_with_video_call:
           type: ["string", "null"]
-          description: "yes, no, not_sure"
+          description: "1=very_uncomfortable to 5=very_comfortable Likert scale value"
 
         # Section 5: Telehealth awareness
         heard_of_telehealth:
@@ -293,6 +296,8 @@ components:
           type: string
         employment_type:
           type: string
+        contractor_company:
+          type: ["string", "null"]
         work_area:
           type: string
         years_at_aga:

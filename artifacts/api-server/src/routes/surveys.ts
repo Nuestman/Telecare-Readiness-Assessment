@@ -35,6 +35,7 @@ router.post("/surveys", async (req, res) => {
       age_group: data.age_group,
       gender: data.gender,
       employment_type: data.employment_type,
+      contractor_company: data.contractor_company ?? null,
       work_area: data.work_area,
       years_at_aga: data.years_at_aga ?? null,
       has_ncd: data.has_ncd,

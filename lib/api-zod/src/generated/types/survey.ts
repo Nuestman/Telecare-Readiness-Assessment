@@ -11,6 +11,8 @@ export interface Survey {
   age_group: string;
   gender: string;
   employment_type: string;
+  /** @nullable */
+  contractor_company?: string | null;
   work_area: string;
   /** @nullable */
   years_at_aga?: string | null;

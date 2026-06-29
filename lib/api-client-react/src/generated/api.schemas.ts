@@ -14,13 +14,18 @@ export interface ErrorResponse {
 }
 
 export interface SurveyInput {
-  /** 18-25, 26-35, 36-45, 46-55, 56+ */
+  /** 18-30, 31-40, 41-50, 50+ */
   age_group: string;
   /** male, female, prefer_not_to_say */
   gender: string;
   /** employee, contractor */
   employment_type: string;
-  /** Department or work area at the mine */
+  /**
+     * Name of contractor company (required when employment_type is contractor)
+     * @nullable
+     */
+  contractor_company?: string | null;
+  /** Department or work area at the mine (including 'other' with manual entry) */
   work_area: string;
   /**
      * less_than_1, 1_to_3, 4_to_6, 7_to_10, more_than_10
@@ -73,7 +78,7 @@ export interface SurveyInput {
      */
   internet_quality?: string | null;
   /**
-     * yes, no, not_sure
+     * 1=very_uncomfortable to 5=very_comfortable Likert scale value
      * @nullable
      */
   comfortable_with_video_call?: string | null;
@@ -145,6 +150,8 @@ export interface Survey {
   age_group: string;
   gender: string;
   employment_type: string;
+  /** @nullable */
+  contractor_company?: string | null;
   work_area: string;
   /** @nullable */
   years_at_aga?: string | null;

@@ -12,7 +12,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { HeartPulse, ArrowRight, ArrowLeft, CheckCircle2, ShieldCheck } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { HeartPulse, ArrowRight, ArrowLeft, CheckCircle2, ShieldCheck, Info } from "lucide-react";
 
 // Types mapping helper
 const toApiMultiSelect = (val: string[] | undefined) => val ? val.join(",") : null;
@@ -26,6 +27,7 @@ function MultiSelectGroup({ options, value = [], onChange }: { options: { label:
         <div key={opt.value} className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm transition-all hover:bg-muted/50 data-[state=checked]:border-primary data-[state=checked]:bg-primary/5">
           <Checkbox
             id={`${idPrefix}-${opt.value}`}
+            className="rounded-none"
             checked={value.includes(opt.value)}
             onCheckedChange={(checked) => {
               if (checked) {
@@ -54,7 +56,7 @@ function CardRadioGroup({ options, value, onChange }: { options: { label: string
           <RadioGroupItem value={opt.value} id={`${idPrefix}-${opt.value}`} className="peer sr-only" />
           <Label
             htmlFor={`${idPrefix}-${opt.value}`}
-            className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 shadow-sm cursor-pointer transition-all hover:bg-muted/50 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 peer-data-[state=checked]:text-primary-foreground font-medium text-foreground"
+            className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 shadow-sm cursor-pointer transition-all hover:bg-muted/50 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 peer-data-[state=checked]:text-primary font-medium text-foreground"
           >
             <div className="flex items-center justify-center w-4 h-4 rounded-full border border-primary peer-data-[state=checked]:border-primary mr-2 shrink-0">
               <div className={`w-2 h-2 rounded-full ${value === opt.value ? 'bg-primary' : 'bg-transparent'}`} />
@@ -67,12 +69,38 @@ function CardRadioGroup({ options, value, onChange }: { options: { label: string
   );
 }
 
+// Horizontal 1–5 Likert scale
+function LikertScale({ value, onChange, minLabel, maxLabel }: { value?: string, onChange: (val: string) => void, minLabel: string, maxLabel: string }) {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-stretch justify-between gap-2">
+        {[1, 2, 3, 4, 5].map((num) => (
+          <button
+            key={num}
+            type="button"
+            onClick={() => onChange(String(num))}
+            className={`flex-1 rounded-md border p-3 text-center transition-all hover:bg-muted/50 ${value === String(num) ? 'border-primary bg-primary/10 text-primary font-bold' : 'bg-card text-foreground'}`}
+          >
+            <span className="block text-lg font-semibold">{num}</span>
+          </button>
+        ))}
+      </div>
+      <div className="flex justify-between text-xs text-muted-foreground">
+        <span>{minLabel}</span>
+        <span>{maxLabel}</span>
+      </div>
+    </div>
+  );
+}
+
 // We'll just define the interface for our form
 const formSchema = z.object({
   age_group: z.string().min(1, "This field is required"),
   gender: z.string().min(1, "This field is required"),
   employment_type: z.string().min(1, "This field is required"),
+  contractor_company: z.string().optional(),
   work_area: z.string().min(1, "This field is required"),
+  work_area_other: z.string().optional(),
   years_at_aga: z.string().min(1, "This field is required"),
   has_ncd: z.string().min(1, "This field is required"),
   ncd_types: z.array(z.string()).default([]),
@@ -108,7 +136,7 @@ type FormValues = z.infer<typeof formSchema>;
 import { Label } from "@/components/ui/label";
 
 const defaultValues: FormValues = {
-  age_group: "", gender: "", employment_type: "", work_area: "", years_at_aga: "",
+  age_group: "", gender: "", employment_type: "", contractor_company: "", work_area: "", work_area_other: "", years_at_aga: "",
   has_ncd: "", ncd_types: [], other_ncd: "", currently_on_treatment: "", treatment_location: "",
   attends_followup: "", missed_followup_reasons: [], other_missed_reason: "",
   has_smartphone: "", smartphone_usage: "", has_internet: "", internet_quality: "", comfortable_with_video_call: "",
@@ -151,7 +179,11 @@ export default function SurveyPage() {
     let fieldsToValidate: (keyof FormValues)[] = [];
     
     if (step === 0) fieldsToValidate = ["consent_given"];
-    else if (step === 1) fieldsToValidate = ["age_group", "gender", "employment_type", "work_area", "years_at_aga"];
+    else if (step === 1) {
+      fieldsToValidate = ["age_group", "gender", "employment_type", "work_area", "years_at_aga"];
+      if (values.employment_type === "contractor") fieldsToValidate.push("contractor_company");
+      if (values.work_area === "other") fieldsToValidate.push("work_area_other");
+    }
     else if (step === 2) {
       fieldsToValidate = ["has_ncd"];
       if (values.has_ncd === "yes") fieldsToValidate.push("currently_on_treatment");
@@ -189,6 +221,8 @@ export default function SurveyPage() {
     // Transform arrays to comma-separated strings
     const payload = {
       ...data,
+      contractor_company: data.employment_type === "contractor" ? data.contractor_company : null,
+      work_area: data.work_area === "other" ? data.work_area_other : data.work_area,
       ncd_types: data.has_ncd === 'yes' && data.ncd_types.length > 0 ? toApiMultiSelect(data.ncd_types) : null,
       other_ncd: data.has_ncd === 'yes' && data.ncd_types.includes('other') ? data.other_ncd : null,
       currently_on_treatment: data.has_ncd === 'yes' ? data.currently_on_treatment : null,
@@ -349,11 +383,10 @@ export default function SurveyPage() {
                       <FormControl>
                         <CardRadioGroup 
                           options={[
-                            { label: "18-25 years", value: "18-25" },
-                            { label: "26-35 years", value: "26-35" },
-                            { label: "36-45 years", value: "36-45" },
-                            { label: "46-55 years", value: "46-55" },
-                            { label: "56+ years", value: "56+" }
+                            { label: "18-30 years", value: "18-30" },
+                            { label: "31-40 years", value: "31-40" },
+                            { label: "41-50 years", value: "41-50" },
+                            { label: "50+ years", value: "50+" }
                           ]}
                           value={field.value} onChange={field.onChange}
                         />
@@ -395,15 +428,54 @@ export default function SurveyPage() {
                     </FormItem>
                   )} />
 
+                  {values.employment_type === "contractor" && (
+                    <FormField control={control} name="contractor_company" render={({ field }) => (
+                      <FormItem className="pl-4 border-l-2 border-primary/20 ml-2 py-2">
+                        <FormLabel className="text-base">Company Name <span className="text-destructive">*</span></FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g. ABC Mining Services" className="h-12 text-base" {...field} />
+                        </FormControl>
+                        {form.formState.errors.contractor_company && <FormMessage>Please enter your company name</FormMessage>}
+                      </FormItem>
+                    )} />
+                  )}
+
                   <FormField control={control} name="work_area" render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-base">Work Area / Department <span className="text-destructive">*</span></FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. Engineering, Mining, HR" className="h-12 text-base" {...field} />
+                        <Select value={field.value} onValueChange={field.onChange}>
+                          <SelectTrigger className="h-12 text-base">
+                            <SelectValue placeholder="Select department" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="mining">Mining / Operations</SelectItem>
+                            <SelectItem value="engineering">Engineering / Maintenance</SelectItem>
+                            <SelectItem value="safety">Safety / Environment</SelectItem>
+                            <SelectItem value="hr">Human Resources / Admin</SelectItem>
+                            <SelectItem value="finance">Finance / Procurement</SelectItem>
+                            <SelectItem value="health">Health / Medical</SelectItem>
+                            <SelectItem value="security">Security</SelectItem>
+                            <SelectItem value="supply_chain">Supply Chain / Logistics</SelectItem>
+                            <SelectItem value="other">Other (specify below)</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </FormControl>
                       {form.formState.errors.work_area && <FormMessage>This field is required</FormMessage>}
                     </FormItem>
                   )} />
+
+                  {values.work_area === "other" && (
+                    <FormField control={control} name="work_area_other" render={({ field }) => (
+                      <FormItem className="pl-4 border-l-2 border-primary/20 ml-2 py-2">
+                        <FormLabel className="text-base">Specify Department <span className="text-destructive">*</span></FormLabel>
+                        <FormControl>
+                          <Input placeholder="Type your department" className="h-12 text-base" {...field} />
+                        </FormControl>
+                        {form.formState.errors.work_area_other && <FormMessage>Please specify your department</FormMessage>}
+                      </FormItem>
+                    )} />
+                  )}
 
                   <FormField control={control} name="years_at_aga" render={({ field }) => (
                     <FormItem>
@@ -652,14 +724,12 @@ export default function SurveyPage() {
 
                   <FormField control={control} name="comfortable_with_video_call" render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-base">Are you comfortable making video calls? <span className="text-destructive">*</span></FormLabel>
+                      <FormLabel className="text-base">How comfortable are you making video calls? <span className="text-destructive">*</span></FormLabel>
+                      <CardDescription className="mb-3">Rate from 1 (Very uncomfortable) to 5 (Very comfortable)</CardDescription>
                       <FormControl>
-                        <CardRadioGroup 
-                          options={[
-                            { label: "Yes", value: "yes" },
-                            { label: "No", value: "no" },
-                            { label: "Not sure", value: "not_sure" }
-                          ]}
+                        <LikertScale
+                          minLabel="Very uncomfortable"
+                          maxLabel="Very comfortable"
                           value={field.value} onChange={field.onChange}
                         />
                       </FormControl>
@@ -672,6 +742,16 @@ export default function SurveyPage() {
               {/* SECTION 5: TELEHEALTH AWARENESS */}
               {step === 5 && (
                 <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
+                  <div className="bg-primary/5 rounded-xl border border-primary/20 p-5 space-y-3">
+                    <div className="flex items-center gap-2 text-primary font-semibold">
+                      <Info className="w-5 h-5" />
+                      <p>What is telehealth?</p>
+                    </div>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Telehealth (also called telemedicine) means getting healthcare services using technology — such as a phone, video call, or messaging app — instead of visiting the hospital or clinic in person. It lets you speak with a doctor or nurse, get a prescription, or follow up on an existing condition without travelling to the facility. Examples include a WhatsApp video call with a doctor, a phone call for a prescription refill, or a chat-based consultation.
+                    </p>
+                  </div>
+
                   <FormField control={control} name="heard_of_telehealth" render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-base">Have you heard of telehealth/telemedicine before? <span className="text-destructive">*</span></FormLabel>

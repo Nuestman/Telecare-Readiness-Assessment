@@ -9,6 +9,7 @@ export const surveysTable = pgTable("surveys", {
   age_group: text("age_group").notNull(),
   gender: text("gender").notNull(),
   employment_type: text("employment_type").notNull(),
+  contractor_company: text("contractor_company"),
   work_area: text("work_area").notNull(),
   years_at_aga: text("years_at_aga"),
 
