@@ -1,17 +1,18 @@
 import { useState, useId } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useSubmitSurvey } from "@workspace/api-client-react";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { HeartPulse, ArrowRight, ArrowLeft, CheckCircle2, Hospital } from "lucide-react";
+import { HeartPulse, ArrowRight, ArrowLeft, CheckCircle2, ShieldCheck } from "lucide-react";
 
 // Types mapping helper
 const toApiMultiSelect = (val: string[] | undefined) => val ? val.join(",") : null;
@@ -130,9 +131,10 @@ const SECTIONS = [
 ];
 
 export default function SurveyPage() {
-  const [step, setStep] = useState(0); // 0 is Welcome, 1-8 are sections, 9 is Thank You
+  const [step, setStep] = useState(0); // 0 is Consent, 1-8 are sections, 9 is Thank You
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [, navigate] = useLocation();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -148,7 +150,8 @@ export default function SurveyPage() {
     // Validate current step before proceeding
     let fieldsToValidate: (keyof FormValues)[] = [];
     
-    if (step === 1) fieldsToValidate = ["age_group", "gender", "employment_type", "work_area", "years_at_aga"];
+    if (step === 0) fieldsToValidate = ["consent_given"];
+    else if (step === 1) fieldsToValidate = ["age_group", "gender", "employment_type", "work_area", "years_at_aga"];
     else if (step === 2) {
       fieldsToValidate = ["has_ncd"];
       if (values.has_ncd === "yes") fieldsToValidate.push("currently_on_treatment");
@@ -160,7 +163,7 @@ export default function SurveyPage() {
     else if (step === 5) fieldsToValidate = ["heard_of_telehealth", "used_telehealth_before"];
     else if (step === 6) fieldsToValidate = ["willing_to_use_telehealth"];
     else if (step === 7) fieldsToValidate = ["privacy_concern", "technical_difficulty_concern", "effectiveness_concern"];
-    else if (step === 8) fieldsToValidate = ["consent_given"];
+    // step 8 (open-ended) has no required fields
 
     const isValid = await trigger(fieldsToValidate);
     
@@ -216,24 +219,83 @@ export default function SurveyPage() {
     });
   };
 
-  const renderWelcome = () => (
-    <div className="flex flex-col items-center justify-center text-center space-y-6 py-12">
-      <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-        <Hospital className="w-12 h-12 text-primary" />
+  const renderConsent = () => (
+    <div className="space-y-6 py-4 animate-in fade-in duration-300">
+      <div className="flex flex-col items-center text-center space-y-3 pb-2">
+        <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+          <ShieldCheck className="w-8 h-8 text-primary" />
+        </div>
+        <h1 className="text-2xl font-bold text-foreground">Informed Consent</h1>
+        <p className="text-muted-foreground text-sm max-w-xl">
+          Please read this carefully before proceeding with the survey.
+        </p>
       </div>
-      <h1 className="text-4xl font-heading font-bold text-foreground">
-        AGA Health Foundation
-      </h1>
-      <h2 className="text-xl font-medium text-muted-foreground max-w-[600px]">
-        Telehealth Readiness Survey
-      </h2>
-      <p className="text-muted-foreground max-w-[600px] leading-relaxed mt-4">
-        We are exploring ways to improve healthcare delivery using technology (Telehealth/Telemedicine) for our employees and contractors at the AGA Obuasi mine.
-        Your honest feedback will help us design a service that works best for you.
-      </p>
-      <div className="pt-8">
-        <Button size="lg" className="px-8 rounded-full h-14 text-lg shadow-md hover-elevate-2" onClick={() => setStep(1)}>
-          Start Survey <ArrowRight className="ml-2 w-5 h-5" />
+
+      <div className="bg-muted/40 rounded-xl border p-5 space-y-4 text-sm text-muted-foreground leading-relaxed">
+        <div>
+          <p className="font-semibold text-foreground mb-1">Study Title</p>
+          <p>Assessment of Telehealth Readiness Among AGA Obuasi Mine Employees and Contractors</p>
+        </div>
+        <div>
+          <p className="font-semibold text-foreground mb-1">Purpose</p>
+          <p>
+            This research is conducted by AGA Health Foundation to explore the feasibility and acceptance of
+            telehealth/telecare services among mine workers at AGA Obuasi. The findings will guide the
+            development of digital health services tailored to your needs — particularly for non-communicable
+            disease (NCD) management and routine review/follow-up appointments.
+          </p>
+        </div>
+        <div>
+          <p className="font-semibold text-foreground mb-1">Voluntary Participation</p>
+          <p>
+            Your participation is entirely voluntary. You may withdraw at any time by simply closing the
+            survey without penalty or consequence.
+          </p>
+        </div>
+        <div>
+          <p className="font-semibold text-foreground mb-1">Confidentiality &amp; Anonymity</p>
+          <p>
+            This survey is anonymous. No names, employee IDs, or personal identifiers are collected.
+            Your responses will be used solely for research purposes and will be reported only in
+            aggregate form. Individual responses will not be shared with your employer or any third party.
+          </p>
+        </div>
+        <div>
+          <p className="font-semibold text-foreground mb-1">Duration</p>
+          <p>The survey takes approximately 5–8 minutes to complete.</p>
+        </div>
+      </div>
+
+      <FormField control={control} name="consent_given" render={({ field }) => (
+        <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 bg-primary/5 rounded-lg border border-primary/20">
+          <FormControl>
+            <Checkbox
+              checked={field.value}
+              onCheckedChange={field.onChange}
+              className="mt-0.5"
+            />
+          </FormControl>
+          <div className="space-y-1 leading-relaxed">
+            <FormLabel className="text-sm font-medium text-foreground cursor-pointer">
+              I have read and understood the information above. I voluntarily agree to participate in this survey and consent to my anonymous responses being used for research by AGA Health Foundation.
+            </FormLabel>
+            {form.formState.errors.consent_given && (
+              <FormMessage>You must agree to continue</FormMessage>
+            )}
+          </div>
+        </FormItem>
+      )} />
+
+      <div className="flex gap-3 pt-2">
+        <Button type="button" variant="outline" className="flex-1" onClick={() => navigate('/')}>
+          <ArrowLeft className="mr-2 w-4 h-4" /> Back to Home
+        </Button>
+        <Button
+          type="button"
+          className="flex-1"
+          onClick={handleNext}
+        >
+          I Agree, Continue <ArrowRight className="ml-2 w-4 h-4" />
         </Button>
       </div>
     </div>
@@ -275,7 +337,7 @@ export default function SurveyPage() {
           <Form {...form}>
             <form onSubmit={(e) => e.preventDefault()} className="p-6 md:p-8 space-y-8">
               
-              {step === 0 && renderWelcome()}
+              {step === 0 && renderConsent()}
               {step === 9 && renderSuccess()}
 
               {/* SECTION 1: DEMOGRAPHICS */}
@@ -824,7 +886,7 @@ export default function SurveyPage() {
                 </div>
               )}
 
-              {/* SECTION 8: OPEN-ENDED & CONSENT */}
+              {/* SECTION 8: OPEN-ENDED */}
               {step === 8 && (
                 <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
                   <FormField control={control} name="suggestions" render={({ field }) => (
@@ -835,29 +897,6 @@ export default function SurveyPage() {
                       </FormControl>
                     </FormItem>
                   )} />
-
-                  <div className="pt-6 border-t mt-8">
-                    <FormField control={control} name="consent_given" render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 bg-muted/30 rounded-lg border border-border">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                            className="mt-1"
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-relaxed">
-                          <FormLabel className="text-base font-medium">
-                            Informed Consent <span className="text-destructive">*</span>
-                          </FormLabel>
-                          <FormDescription className="text-sm">
-                            I understand that my participation in this survey is voluntary. My responses will be kept confidential and used solely for research and service improvement purposes by AGA Health Foundation. By checking this box, I consent to participate.
-                          </FormDescription>
-                          {form.formState.errors.consent_given && <FormMessage>You must provide consent to submit</FormMessage>}
-                        </div>
-                      </FormItem>
-                    )} />
-                  </div>
                 </div>
               )}
 
@@ -901,11 +940,9 @@ export default function SurveyPage() {
           </Form>
         </div>
         
-        {step === 0 && (
-          <div className="mt-12 text-center text-sm text-muted-foreground">
-            <p>AGA Health Foundation • Obuasi Mine</p>
-          </div>
-        )}
+        <div className="mt-8 text-center text-xs text-muted-foreground pb-4">
+          AGA Health Foundation • Obuasi Mine
+        </div>
       </div>
     </div>
   );
