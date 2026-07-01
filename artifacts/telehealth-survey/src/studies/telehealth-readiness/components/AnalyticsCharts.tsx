@@ -8,14 +8,6 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart';
 
-const CHART_COLORS = [
-  'hsl(var(--chart-1))',
-  'hsl(var(--chart-2))',
-  'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))',
-  'hsl(var(--chart-5))',
-] as const;
-
 function breakdownToChartData(data: Record<string, number> | undefined) {
   if (!data) return [];
   return Object.entries(data).map(([name, value]) => ({
@@ -25,14 +17,21 @@ function breakdownToChartData(data: Record<string, number> | undefined) {
 }
 
 function buildChartConfig(chartData: { name: string }[]): ChartConfig {
-  const config: ChartConfig = {};
+  const config: ChartConfig = {
+    value: {
+      label: 'Count',
+    },
+  };
+
   chartData.forEach((entry, index) => {
     const key = `segment${index}`;
+    const chartVar = `--chart-${(index % 5) + 1}`;
     config[key] = {
       label: entry.name,
-      color: CHART_COLORS[index % CHART_COLORS.length],
+      color: `hsl(var(${chartVar}))`,
     };
   });
+
   return config;
 }
 
@@ -71,7 +70,7 @@ function BreakdownChart({ title, data }: { title: string; data: Record<string, n
               tickLine={false}
               axisLine={false}
             />
-            <ChartTooltip content={<ChartTooltipContent labelKey="name" hideIndicator />} />
+            <ChartTooltip content={<ChartTooltipContent labelKey="name" />} />
             <Bar dataKey="value" radius={[4, 4, 0, 0]}>
               {chartData.map((_, index) => (
                 <Cell key={`cell-${index}`} fill={`var(--color-segment${index})`} />

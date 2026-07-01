@@ -1,10 +1,9 @@
 import { Router, type Request } from "express";
 import bcrypt from "bcryptjs";
-import { eq } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, adminUsersTable } from "@workspace/db";
 import { requireAuth } from "../middleware/auth";
-import { hasAnyAdminUser } from "../lib/admin-users";
 
 const router = Router();
 
@@ -21,7 +20,13 @@ const RegisterBody = z.object({
 
 function attachSession(
   req: Request,
-  user: { id: number; email: string; name: string; role: "viewer" | "analyst" | "admin" },
+  user: {
+    id: number;
+    email: string;
+    name: string;
+    role: "viewer" | "analyst" | "admin";
+    status: "pending" | "approved" | "rejected";
+  },
 ) {
   req.session.userId = user.id;
   req.session.email = user.email;
@@ -29,17 +34,40 @@ function attachSession(
   req.session.role = user.role;
 }
 
-router.get("/auth/setup-status", async (_req, res) => {
-  const registration_open = !(await hasAnyAdminUser());
-  res.json({ registration_open });
-});
+function isUniqueViolation(err: unknown): boolean {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "code" in err &&
+    (err as { code: string }).code === "23505"
+  );
+}
+
+function publicUser(user: {
+  id: number;
+  email: string;
+  name: string;
+  role: "viewer" | "analyst" | "admin";
+  status: "pending" | "approved" | "rejected";
+}) {
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    status: user.status,
+  };
+}
+
+async function countApprovedAdmins(): Promise<number> {
+  const [row] = await db
+    .select({ count: count() })
+    .from(adminUsersTable)
+    .where(eq(adminUsersTable.status, "approved"));
+  return row?.count ?? 0;
+}
 
 router.post("/auth/register", async (req, res) => {
-  if (await hasAnyAdminUser()) {
-    res.status(403).json({ error: "Admin registration is closed" });
-    return;
-  }
-
   const parsed = RegisterBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
@@ -48,24 +76,38 @@ router.post("/auth/register", async (req, res) => {
 
   const email = parsed.data.email.trim().toLowerCase();
   const password_hash = await bcrypt.hash(parsed.data.password, 12);
+  const isFirstUser = (await countApprovedAdmins()) === 0;
 
-  const [user] = await db
-    .insert(adminUsersTable)
-    .values({
-      email,
-      password_hash,
-      name: parsed.data.name,
-      role: "admin",
-    })
-    .returning({
-      id: adminUsersTable.id,
-      email: adminUsersTable.email,
-      name: adminUsersTable.name,
-      role: adminUsersTable.role,
-    });
+  try {
+    const [user] = await db
+      .insert(adminUsersTable)
+      .values({
+        email,
+        password_hash,
+        name: parsed.data.name,
+        role: isFirstUser ? "admin" : "viewer",
+        status: isFirstUser ? "approved" : "pending",
+      })
+      .returning({
+        id: adminUsersTable.id,
+        email: adminUsersTable.email,
+        name: adminUsersTable.name,
+        role: adminUsersTable.role,
+        status: adminUsersTable.status,
+      });
 
-  attachSession(req, user);
-  res.status(201).json(user);
+    if (user.status === "approved") {
+      attachSession(req, user);
+    }
+
+    res.status(201).json(publicUser(user));
+  } catch (err) {
+    if (isUniqueViolation(err)) {
+      res.status(409).json({ error: "An account with this email already exists" });
+      return;
+    }
+    throw err;
+  }
 });
 
 router.post("/auth/login", async (req, res) => {
@@ -83,23 +125,33 @@ router.post("/auth/login", async (req, res) => {
     .limit(1);
 
   if (!user) {
+    req.log.info({ email }, "Login failed: unknown email");
     res.status(401).json({ error: "Invalid email or password" });
     return;
   }
 
   const valid = await bcrypt.compare(parsed.data.password, user.password_hash);
   if (!valid) {
+    req.log.info({ email, userId: user.id }, "Login failed: invalid password");
     res.status(401).json({ error: "Invalid email or password" });
     return;
   }
 
+  if (user.status === "pending") {
+    req.log.info({ email, userId: user.id }, "Login blocked: account pending approval");
+    res.status(403).json({ error: "Your account is pending approval. Contact an administrator." });
+    return;
+  }
+
+  if (user.status === "rejected") {
+    req.log.info({ email, userId: user.id }, "Login blocked: account rejected");
+    res.status(403).json({ error: "Your account was not approved. Contact an administrator." });
+    return;
+  }
+
   attachSession(req, user);
-  res.json({
-    id: user.id,
-    email: user.email,
-    name: user.name,
-    role: user.role,
-  });
+  req.log.info({ email, userId: user.id, role: user.role }, "Login succeeded");
+  res.json(publicUser(user));
 });
 
 router.post("/auth/logout", requireAuth, (req, res) => {
@@ -113,18 +165,30 @@ router.post("/auth/logout", requireAuth, (req, res) => {
   });
 });
 
-router.get("/auth/me", (req, res) => {
-  if (!req.session.userId || !req.session.role || !req.session.email || !req.session.name) {
+router.get("/auth/me", async (req, res) => {
+  if (!req.session.userId) {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
 
-  res.json({
-    id: req.session.userId,
-    email: req.session.email,
-    name: req.session.name,
-    role: req.session.role,
-  });
+  const [user] = await db
+    .select({
+      id: adminUsersTable.id,
+      email: adminUsersTable.email,
+      name: adminUsersTable.name,
+      role: adminUsersTable.role,
+      status: adminUsersTable.status,
+    })
+    .from(adminUsersTable)
+    .where(eq(adminUsersTable.id, req.session.userId))
+    .limit(1);
+
+  if (!user || user.status !== "approved") {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  res.json(publicUser(user));
 });
 
 export default router;

@@ -5,7 +5,9 @@
  * AGA Health Foundation Telehealth Readiness Survey API
  * OpenAPI spec version: 0.1.0
  */
+import type { AdminUserPublic } from './adminUserPublic';
 
-export interface AuthSetupStatus {
-  registration_open: boolean;
+export interface AdminUserListResponse {
+  users: AdminUserPublic[];
+  total: number;
 }

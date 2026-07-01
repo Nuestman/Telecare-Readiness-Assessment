@@ -32,9 +32,11 @@ if (-not $env:SESSION_SECRET) { $env:SESSION_SECRET = "dev-session-secret-change
 if (-not $env:TELEHEALTH_PORT) { $env:TELEHEALTH_PORT = "21409" }
 if (-not $env:TELEHEALTH_BASE_PATH) { $env:TELEHEALTH_BASE_PATH = "/" }
 
-Write-Host "Building API server"
+Write-Host "Building API server (restart required after API route changes)"
 pnpm --filter @workspace/api-server run build
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+Write-Host "API bundle includes admin user routes when built from current source."
 
 Write-Host ("Starting API server on port {0}" -f $env:PORT)
 $pnpmCmd = (Get-Command pnpm.cmd -ErrorAction SilentlyContinue).Source

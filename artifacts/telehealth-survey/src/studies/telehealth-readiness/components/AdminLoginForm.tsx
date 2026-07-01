@@ -4,6 +4,7 @@ import { useAdmin } from '@/context/AdminContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { formatApiError } from '@/studies/telehealth-readiness/lib/format-api-error';
 import { Lock, AlertCircle } from 'lucide-react';
 
 type AdminLoginFormProps = {
@@ -27,12 +28,12 @@ export function AdminLoginForm({ onSuccess, onCancel, showCancel = false }: Admi
       await loginMutation.mutateAsync({ data: { email, password } });
       const me = await refresh();
       if (!me) {
-        setError('Invalid email or password.');
+        setError('Signed in, but the session could not be verified. Refresh the page and try again.');
         return;
       }
       onSuccess?.();
-    } catch {
-      setError('Invalid email or password.');
+    } catch (err) {
+      setError(formatApiError(err, 'Invalid email or password.'));
     }
   };
 

@@ -26,10 +26,6 @@ export interface RegisterInput {
   name: string;
 }
 
-export interface AuthSetupStatus {
-  registration_open: boolean;
-}
-
 export type AuthUserRole = typeof AuthUserRole[keyof typeof AuthUserRole];
 
 
@@ -39,11 +35,108 @@ export const AuthUserRole = {
   admin: 'admin',
 } as const;
 
+export type AuthUserStatus = typeof AuthUserStatus[keyof typeof AuthUserStatus];
+
+
+export const AuthUserStatus = {
+  pending: 'pending',
+  approved: 'approved',
+  rejected: 'rejected',
+} as const;
+
 export interface AuthUser {
   id: number;
   email: string;
   name: string;
   role: AuthUserRole;
+  status: AuthUserStatus;
+}
+
+export type AdminUserPublicRole = typeof AdminUserPublicRole[keyof typeof AdminUserPublicRole];
+
+
+export const AdminUserPublicRole = {
+  viewer: 'viewer',
+  analyst: 'analyst',
+  admin: 'admin',
+} as const;
+
+export type AdminUserPublicStatus = typeof AdminUserPublicStatus[keyof typeof AdminUserPublicStatus];
+
+
+export const AdminUserPublicStatus = {
+  pending: 'pending',
+  approved: 'approved',
+  rejected: 'rejected',
+} as const;
+
+export interface AdminUserPublic {
+  id: number;
+  email: string;
+  name: string;
+  role: AdminUserPublicRole;
+  status: AdminUserPublicStatus;
+  created_at: string;
+}
+
+export interface AdminUserListResponse {
+  users: AdminUserPublic[];
+  total: number;
+}
+
+export type CreateAdminUserInputRole = typeof CreateAdminUserInputRole[keyof typeof CreateAdminUserInputRole];
+
+
+export const CreateAdminUserInputRole = {
+  viewer: 'viewer',
+  analyst: 'analyst',
+  admin: 'admin',
+} as const;
+
+export type CreateAdminUserInputStatus = typeof CreateAdminUserInputStatus[keyof typeof CreateAdminUserInputStatus];
+
+
+export const CreateAdminUserInputStatus = {
+  pending: 'pending',
+  approved: 'approved',
+  rejected: 'rejected',
+} as const;
+
+export interface CreateAdminUserInput {
+  email: string;
+  /** @minLength 8 */
+  password: string;
+  /** @minLength 1 */
+  name: string;
+  role?: CreateAdminUserInputRole;
+  status?: CreateAdminUserInputStatus;
+}
+
+export type UpdateAdminUserInputRole = typeof UpdateAdminUserInputRole[keyof typeof UpdateAdminUserInputRole];
+
+
+export const UpdateAdminUserInputRole = {
+  viewer: 'viewer',
+  analyst: 'analyst',
+  admin: 'admin',
+} as const;
+
+export type UpdateAdminUserInputStatus = typeof UpdateAdminUserInputStatus[keyof typeof UpdateAdminUserInputStatus];
+
+
+export const UpdateAdminUserInputStatus = {
+  pending: 'pending',
+  approved: 'approved',
+  rejected: 'rejected',
+} as const;
+
+export interface UpdateAdminUserInput {
+  /** @minLength 1 */
+  name?: string;
+  role?: UpdateAdminUserInputRole;
+  status?: UpdateAdminUserInputStatus;
+  /** @minLength 8 */
+  password?: string;
 }
 
 export interface AuthLogoutOk {

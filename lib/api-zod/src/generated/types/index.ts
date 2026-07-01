@@ -6,11 +6,18 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './adminUserListResponse';
+export * from './adminUserPublic';
+export * from './adminUserPublicRole';
+export * from './adminUserPublicStatus';
 export * from './authLogoutOk';
-export * from './authSetupStatus';
 export * from './authUser';
 export * from './authUserRole';
+export * from './authUserStatus';
 export * from './collectionStatus';
+export * from './createAdminUserInput';
+export * from './createAdminUserInputRole';
+export * from './createAdminUserInputStatus';
 export * from './errorResponse';
 export * from './exportSurveysParams';
 export * from './getSurveyStatsParams';
@@ -30,3 +37,6 @@ export * from './surveyStatsHasNcdBreakdown';
 export * from './surveyStatsWillingForFollowupTelecareBreakdown';
 export * from './surveyStatsWillingForNcdTelecareBreakdown';
 export * from './surveyStatsWillingnessBreakdown';
+export * from './updateAdminUserInput';
+export * from './updateAdminUserInputRole';
+export * from './updateAdminUserInputStatus';

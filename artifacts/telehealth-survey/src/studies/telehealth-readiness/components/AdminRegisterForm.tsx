@@ -19,22 +19,41 @@ export function AdminRegisterForm({ onSuccess, onCancel }: AdminRegisterFormProp
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [pendingMessage, setPendingMessage] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setPendingMessage('');
     try {
-      await registerMutation.mutateAsync({ data: { name, email, password } });
+      const user = await registerMutation.mutateAsync({ data: { name, email, password } });
+      if (user.status === 'pending') {
+        setPendingMessage('Registration submitted. An admin will approve your account before you can sign in.');
+        return;
+      }
       const me = await refresh();
       if (!me) {
-        setError('Account created, but the session could not be established. Try signing in.');
+        setError('Account created, but sign-in failed. Try logging in.');
         return;
       }
       onSuccess?.();
     } catch {
-      setError('Could not create admin account. Registration may already be closed.');
+      setError('Could not create account. This email may already be registered.');
     }
   };
+
+  if (pendingMessage) {
+    return (
+      <div className="space-y-4 text-center">
+        <p className="text-sm text-muted-foreground">{pendingMessage}</p>
+        {onCancel && (
+          <Button type="button" variant="outline" className="w-full" onClick={onCancel}>
+            Back to sign in
+          </Button>
+        )}
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -79,7 +98,7 @@ export function AdminRegisterForm({ onSuccess, onCancel }: AdminRegisterFormProp
       )}
       <Button type="submit" className="w-full gap-2" disabled={registerMutation.isPending}>
         <UserPlus className="w-4 h-4" />
-        {registerMutation.isPending ? 'Creating account...' : 'Create admin account'}
+        {registerMutation.isPending ? 'Creating account...' : 'Create account'}
       </Button>
       {onCancel && (
         <Button type="button" variant="ghost" className="w-full" onClick={onCancel}>

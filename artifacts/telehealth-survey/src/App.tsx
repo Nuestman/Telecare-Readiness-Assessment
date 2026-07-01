@@ -5,6 +5,7 @@ import { AdminProvider, useAdmin } from '@/context/AdminContext';
 import NotFound from '@/pages/not-found';
 import AdminLoginPage from '@/studies/telehealth-readiness/pages/AdminLoginPage';
 import AdminRegisterPage from '@/studies/telehealth-readiness/pages/AdminRegisterPage';
+import AdminUsersPage from '@/studies/telehealth-readiness/pages/AdminUsersPage';
 import LandingPage from '@/studies/telehealth-readiness/pages/LandingPage';
 import SurveyPage from '@/studies/telehealth-readiness/pages/SurveyPage';
 import AdminDashboard from '@/studies/telehealth-readiness/pages/AdminDashboard';
@@ -28,7 +29,13 @@ function Router() {
       <Route path={studyPaths.landing} component={LandingPage} />
       <Route path={studyPaths.survey} component={SurveyPage} />
       <Route path={studyPaths.adminLogin} component={AdminLoginPage} />
-      <Route path={studyPaths.adminRegister} component={AdminRegisterPage} />
+      <Route path="/studies/telehealth-readiness/admin/register">
+        <Redirect to={studyPaths.registration} />
+      </Route>
+      <Route path={studyPaths.registration} component={AdminRegisterPage} />
+      <Route path={studyPaths.adminUsers}>
+        {() => <ProtectedAdminRoute component={AdminUsersPage} />}
+      </Route>
       <Route path={studyPaths.adminReport}>
         {() => <ProtectedAdminRoute component={AdminReportPage} />}
       </Route>
@@ -41,13 +48,15 @@ function Router() {
 
       <Route path="/"><Redirect to={studyPaths.landing} /></Route>
       <Route path="/survey"><Redirect to={studyPaths.survey} /></Route>
+      <Route path="/registration"><Redirect to={studyPaths.registration} /></Route>
+      <Route path="/admin/register"><Redirect to={studyPaths.registration} /></Route>
       <Route path="/admin/login"><Redirect to={studyPaths.adminLogin} /></Route>
-      <Route path="/admin/register"><Redirect to={studyPaths.adminRegister} /></Route>
       <Route path="/admin/report"><Redirect to={studyPaths.adminReport} /></Route>
-      <Route path="/admin"><Redirect to={studyPaths.admin} /></Route>
+      <Route path="/admin/users"><Redirect to={studyPaths.adminUsers} /></Route>
       <Route path="/admin/survey/:id">
         {(params) => <Redirect to={studyPaths.adminResponse(params.id)} />}
       </Route>
+      <Route path="/admin"><Redirect to={studyPaths.admin} /></Route>
 
       <Route component={NotFound} />
     </Switch>

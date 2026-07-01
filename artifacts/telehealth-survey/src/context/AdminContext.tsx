@@ -14,6 +14,7 @@ interface AdminUser {
   email: string;
   name: string;
   role: 'viewer' | 'analyst' | 'admin';
+  status: 'pending' | 'approved' | 'rejected';
 }
 
 interface AdminContextValue {

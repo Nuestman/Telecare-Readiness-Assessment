@@ -18,15 +18,7 @@ export const HealthCheckResponse = zod.object({
 
 
 /**
- * @summary Whether first-time admin registration is available
- */
-export const GetAuthSetupStatusResponse = zod.object({
-  "registration_open": zod.boolean()
-})
-
-
-/**
- * @summary Create the first admin account (one-time)
+ * @summary Create admin account
  */
 export const registerAdminBodyPasswordMin = 8;
 
@@ -43,7 +35,8 @@ export const RegisterAdminResponse = zod.object({
   "id": zod.number(),
   "email": zod.string(),
   "name": zod.string(),
-  "role": zod.enum(['viewer', 'analyst', 'admin'])
+  "role": zod.enum(['viewer', 'analyst', 'admin']),
+  "status": zod.enum(['pending', 'approved', 'rejected'])
 })
 
 
@@ -59,7 +52,8 @@ export const LoginResponse = zod.object({
   "id": zod.number(),
   "email": zod.string(),
   "name": zod.string(),
-  "role": zod.enum(['viewer', 'analyst', 'admin'])
+  "role": zod.enum(['viewer', 'analyst', 'admin']),
+  "status": zod.enum(['pending', 'approved', 'rejected'])
 })
 
 
@@ -78,7 +72,91 @@ export const GetAuthMeResponse = zod.object({
   "id": zod.number(),
   "email": zod.string(),
   "name": zod.string(),
-  "role": zod.enum(['viewer', 'analyst', 'admin'])
+  "role": zod.enum(['viewer', 'analyst', 'admin']),
+  "status": zod.enum(['pending', 'approved', 'rejected'])
+})
+
+
+/**
+ * @summary List admin users
+ */
+export const ListAdminUsersResponse = zod.object({
+  "users": zod.array(zod.object({
+  "id": zod.number(),
+  "email": zod.string(),
+  "name": zod.string(),
+  "role": zod.enum(['viewer', 'analyst', 'admin']),
+  "status": zod.enum(['pending', 'approved', 'rejected']),
+  "created_at": zod.coerce.date()
+})),
+  "total": zod.number()
+})
+
+
+/**
+ * @summary Create admin user
+ */
+export const createAdminUserBodyPasswordMin = 8;
+
+
+
+
+export const CreateAdminUserBody = zod.object({
+  "email": zod.string().email(),
+  "password": zod.string().min(createAdminUserBodyPasswordMin),
+  "name": zod.string().min(1),
+  "role": zod.enum(['viewer', 'analyst', 'admin']).optional(),
+  "status": zod.enum(['pending', 'approved', 'rejected']).optional()
+})
+
+export const CreateAdminUserResponse = zod.object({
+  "id": zod.number(),
+  "email": zod.string(),
+  "name": zod.string(),
+  "role": zod.enum(['viewer', 'analyst', 'admin']),
+  "status": zod.enum(['pending', 'approved', 'rejected']),
+  "created_at": zod.coerce.date()
+})
+
+
+/**
+ * @summary Update admin user
+ */
+export const UpdateAdminUserParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+export const updateAdminUserBodyPasswordMin = 8;
+
+
+
+export const UpdateAdminUserBody = zod.object({
+  "name": zod.string().min(1).optional(),
+  "role": zod.enum(['viewer', 'analyst', 'admin']).optional(),
+  "status": zod.enum(['pending', 'approved', 'rejected']).optional(),
+  "password": zod.string().min(updateAdminUserBodyPasswordMin).optional()
+})
+
+export const UpdateAdminUserResponse = zod.object({
+  "id": zod.number(),
+  "email": zod.string(),
+  "name": zod.string(),
+  "role": zod.enum(['viewer', 'analyst', 'admin']),
+  "status": zod.enum(['pending', 'approved', 'rejected']),
+  "created_at": zod.coerce.date()
+})
+
+
+/**
+ * @summary Delete admin user
+ */
+export const DeleteAdminUserParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteAdminUserResponse = zod.object({
+  "ok": zod.boolean()
 })
 
 

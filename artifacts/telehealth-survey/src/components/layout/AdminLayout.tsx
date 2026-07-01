@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, HeartPulse, LogOut, Share2, Check, Copy, ExternalLink, FileBarChart } from "lucide-react";
+import { LayoutDashboard, HeartPulse, LogOut, Share2, Check, Copy, ExternalLink, FileBarChart, Users } from "lucide-react";
 import QRCode from "qrcode";
 import { useAdmin } from "@/context/AdminContext";
 import { Button } from "@/components/ui/button";
@@ -120,6 +120,14 @@ export function AdminLayout({ children }: { children: ReactNode }) {
               Pilot Report
             </div>
           </Link>
+          {user?.role === 'admin' && (
+            <Link href={studyPaths.adminUsers}>
+              <div className={navClass(studyPaths.adminUsers)}>
+                <Users className="w-4 h-4 shrink-0" />
+                Users
+              </div>
+            </Link>
+          )}
         </nav>
 
         <div className="p-4 border-t space-y-2">

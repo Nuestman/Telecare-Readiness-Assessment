@@ -1,5 +1,6 @@
 import app from "./app";
 import { logger } from "./lib/logger";
+import { ensureBootstrapAdminApproved } from "./lib/ensure-admin-users";
 import { ensureSessionTable } from "./lib/ensure-session-table";
 
 const rawPort = process.env["PORT"];
@@ -17,6 +18,7 @@ if (Number.isNaN(port) || port <= 0) {
 }
 
 await ensureSessionTable();
+await ensureBootstrapAdminApproved();
 
 app.listen(port, (err) => {
   if (err) {

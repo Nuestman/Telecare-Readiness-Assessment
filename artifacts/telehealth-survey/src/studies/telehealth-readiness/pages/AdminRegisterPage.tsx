@@ -1,6 +1,4 @@
-import { useEffect } from 'react';
-import { useLocation, Link } from 'wouter';
-import { useGetAuthSetupStatus } from '@workspace/api-client-react';
+import { useLocation } from 'wouter';
 import { useAdmin } from '@/context/AdminContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { HeartPulse } from 'lucide-react';
@@ -11,20 +9,9 @@ import { studyPaths } from '@/studies/telehealth-readiness/paths';
 export default function AdminRegisterPage() {
   const [, navigate] = useLocation();
   const { isAuthenticated } = useAdmin();
-  const { data: setupStatus, isLoading } = useGetAuthSetupStatus();
-
-  useEffect(() => {
-    if (!isLoading && setupStatus && !setupStatus.registration_open) {
-      navigate(studyPaths.adminLogin);
-    }
-  }, [isLoading, setupStatus, navigate]);
 
   if (isAuthenticated) {
     navigate(studyPaths.admin);
-    return null;
-  }
-
-  if (isLoading || !setupStatus?.registration_open) {
     return null;
   }
 
@@ -35,10 +22,9 @@ export default function AdminRegisterPage() {
           <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
             <HeartPulse className="w-6 h-6 text-primary" />
           </div>
-          <CardTitle className="text-xl">Set up research admin</CardTitle>
+          <CardTitle className="text-xl">Research team registration</CardTitle>
           <CardDescription>
-            Create the first admin account for {telehealthStudyConfig.shortTitle}. This page
-            closes after one account is created.
+            Create an admin account for {telehealthStudyConfig.shortTitle}.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -53,18 +39,12 @@ export default function AdminRegisterPage() {
 }
 
 export function AdminRegisterLink() {
-  const { data: setupStatus } = useGetAuthSetupStatus();
-
-  if (!setupStatus?.registration_open) {
-    return null;
-  }
-
   return (
     <p className="text-center text-sm text-muted-foreground">
-      No admin yet?{' '}
-      <Link href={studyPaths.adminRegister} className="text-primary font-medium hover:underline">
-        Create the first admin account
-      </Link>
+      Need an account?{' '}
+      <a href={studyPaths.registration} className="text-primary font-medium hover:underline">
+        Register
+      </a>
     </p>
   );
 }

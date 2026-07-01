@@ -31,24 +31,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
 
-  /auth/setup-status:
-    get:
-      operationId: getAuthSetupStatus
-      tags: [auth]
-      summary: Whether first-time admin registration is available
-      responses:
-        "200":
-          description: Setup status
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AuthSetupStatus"
-
   /auth/register:
     post:
       operationId: registerAdmin
       tags: [auth]
-      summary: Create the first admin account (one-time)
+      summary: Create admin account
       requestBody:
         required: true
         content:
@@ -68,8 +55,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-        "403":
-          description: Registration closed
+        "409":
+          description: Email already registered
           content:
             application/json:
               schema:
@@ -127,6 +114,114 @@ paths:
                 $ref: "#/components/schemas/AuthUser"
         "401":
           description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/admin/users:
+    get:
+      operationId: listAdminUsers
+      tags: [auth]
+      summary: List admin users
+      responses:
+        "200":
+          description: Admin user list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUserListResponse"
+    post:
+      operationId: createAdminUser
+      tags: [auth]
+      summary: Create admin user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAdminUserInput"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUserPublic"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Email already registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/admin/users/{id}:
+    patch:
+      operationId: updateAdminUser
+      tags: [auth]
+      summary: Update admin user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAdminUserInput"
+      responses:
+        "200":
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUserPublic"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteAdminUser
+      tags: [auth]
+      summary: Delete admin user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthLogoutOk"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
           content:
             application/json:
               schema:
@@ -374,14 +469,6 @@ components:
           type: string
           minLength: 1
 
-    AuthSetupStatus:
-      type: object
-      required:
-        - registration_open
-      properties:
-        registration_open:
-          type: boolean
-
     AuthUser:
       type: object
       required:
@@ -389,6 +476,7 @@ components:
         - email
         - name
         - role
+        - status
       properties:
         id:
           type: integer
@@ -399,6 +487,87 @@ components:
         role:
           type: string
           enum: [viewer, analyst, admin]
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+
+    AdminUserPublic:
+      type: object
+      required:
+        - id
+        - email
+        - name
+        - role
+        - status
+        - created_at
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum: [viewer, analyst, admin]
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+        created_at:
+          type: string
+          format: date-time
+
+    AdminUserListResponse:
+      type: object
+      required:
+        - users
+        - total
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminUserPublic"
+        total:
+          type: integer
+
+    CreateAdminUserInput:
+      type: object
+      required:
+        - email
+        - password
+        - name
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        name:
+          type: string
+          minLength: 1
+        role:
+          type: string
+          enum: [viewer, analyst, admin]
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+
+    UpdateAdminUserInput:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        role:
+          type: string
+          enum: [viewer, analyst, admin]
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+        password:
+          type: string
+          minLength: 8
 
     AuthLogoutOk:
       type: object
