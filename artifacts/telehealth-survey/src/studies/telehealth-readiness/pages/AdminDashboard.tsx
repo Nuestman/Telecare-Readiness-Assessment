@@ -1,34 +1,82 @@
-import { useState } from "react";
-import { useListSurveys, useGetSurveyStats } from "@workspace/api-client-react";
+import { useMemo, useState } from "react";
+import { useListSurveys, useGetSurveyStats, type ListSurveysParams } from "@workspace/api-client-react";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "wouter";
-import { Users, Activity, HeartPulse, Smartphone } from "lucide-react";
+import { Users, Activity, HeartPulse, Smartphone, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { FilterBar } from "@/studies/telehealth-readiness/components/FilterBar";
+import { AnalyticsCharts } from "@/studies/telehealth-readiness/components/AnalyticsCharts";
+import { downloadSurveyExport } from "@/studies/telehealth-readiness/lib/export-surveys";
+import { studyPaths } from "@/studies/telehealth-readiness/paths";
+import { useAdmin } from "@/context/AdminContext";
+
+const defaultFilters: ListSurveysParams = {};
 
 export default function AdminDashboard() {
   const [page, setPage] = useState(1);
+  const [filters, setFilters] = useState<ListSurveysParams>(defaultFilters);
+  const [exporting, setExporting] = useState(false);
   const limit = 20;
+  const { user } = useAdmin();
 
-  const { data: stats, isLoading: statsLoading } = useGetSurveyStats();
-  const { data: surveysData, isLoading: surveysLoading } = useListSurveys({ page, limit });
+  const queryParams = useMemo(
+    () => ({ ...filters, page, limit }),
+    [filters, page, limit],
+  );
+
+  const { data: stats, isLoading: statsLoading } = useGetSurveyStats(filters);
+  const { data: surveysData, isLoading: surveysLoading } = useListSurveys(queryParams);
+
+  const canExport = user?.role === 'analyst' || user?.role === 'admin';
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      await downloadSurveyExport(filters);
+    } catch {
+      alert('Export failed. You may need analyst access.');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div>
-          <h2 className="text-3xl font-heading font-bold tracking-tight">Dashboard Overview</h2>
-          <p className="text-muted-foreground mt-1">
-            Aggregate insights from the telehealth readiness survey.
-          </p>
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+          <div>
+            <h2 className="text-3xl font-heading font-bold tracking-tight">Dashboard Overview</h2>
+            <p className="text-muted-foreground mt-1">
+              Telehealth readiness pilot — filtered analytics and responses.
+            </p>
+          </div>
+          {canExport && (
+            <Button variant="outline" onClick={handleExport} disabled={exporting} className="gap-2">
+              <Download className="w-4 h-4" />
+              {exporting ? 'Exporting...' : 'Export CSV'}
+            </Button>
+          )}
         </div>
+
+        <FilterBar
+          filters={filters}
+          onChange={(f) => {
+            setFilters(f);
+            setPage(1);
+          }}
+          onReset={() => {
+            setFilters(defaultFilters);
+            setPage(1);
+          }}
+        />
 
         {statsLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map(i => (
+            {[1, 2, 3, 4].map((i) => (
               <Card key={i}><CardContent className="p-6"><Skeleton className="h-20 w-full" /></CardContent></Card>
             ))}
           </div>
@@ -87,8 +135,8 @@ export default function AdminDashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Recent Responses</CardTitle>
-            <CardDescription>Individual survey submissions from staff and contractors.</CardDescription>
+            <CardTitle>Responses</CardTitle>
+            <CardDescription>Individual survey submissions matching current filters.</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="rounded-md border border-border bg-card">
@@ -97,8 +145,8 @@ export default function AdminDashboard() {
                   <TableRow>
                     <TableHead>Date</TableHead>
                     <TableHead>Employment</TableHead>
-                    <TableHead>NCD Status</TableHead>
-                    <TableHead>Follow-up</TableHead>
+                    <TableHead>Work area</TableHead>
+                    <TableHead>NCD</TableHead>
                     <TableHead>Willingness</TableHead>
                     <TableHead className="text-right">Action</TableHead>
                   </TableRow>
@@ -107,45 +155,27 @@ export default function AdminDashboard() {
                   {surveysLoading ? (
                     Array.from({ length: 5 }).map((_, i) => (
                       <TableRow key={i}>
-                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                        <TableCell><Skeleton className="h-4 w-10" /></TableCell>
-                        <TableCell><Skeleton className="h-8 w-16 ml-auto" /></TableCell>
+                        <TableCell colSpan={6}><Skeleton className="h-8 w-full" /></TableCell>
                       </TableRow>
                     ))
                   ) : surveysData?.surveys.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
-                        No responses yet.
+                        No responses match these filters.
                       </TableCell>
                     </TableRow>
                   ) : (
-                    surveysData?.surveys.map(survey => (
+                    surveysData?.surveys.map((survey) => (
                       <TableRow key={survey.id}>
                         <TableCell className="font-medium whitespace-nowrap">
                           {new Date(survey.submitted_at).toLocaleDateString()}
                         </TableCell>
                         <TableCell className="capitalize">{survey.employment_type}</TableCell>
-                        <TableCell>
-                          {survey.has_ncd === 'yes' ? (
-                            <Badge variant="destructive" className="bg-chart-4 hover:bg-chart-4/80 text-chart-4-foreground border-transparent">Yes</Badge>
-                          ) : survey.has_ncd === 'no' ? (
-                            <Badge variant="outline" className="bg-muted text-muted-foreground">No</Badge>
-                          ) : (
-                            <Badge variant="outline" className="text-muted-foreground">Prefer not to say</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="capitalize">{survey.attends_followup}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <span className="font-medium">{survey.willing_to_use_telehealth}</span>
-                            <span className="text-muted-foreground text-xs">/ 5</span>
-                          </div>
-                        </TableCell>
+                        <TableCell>{survey.work_area}</TableCell>
+                        <TableCell className="capitalize">{survey.has_ncd}</TableCell>
+                        <TableCell>{survey.willing_to_use_telehealth} / 5</TableCell>
                         <TableCell className="text-right">
-                          <Link href={`/admin/survey/${survey.id}`}>
+                          <Link href={studyPaths.adminResponse(survey.id)}>
                             <Button variant="ghost" size="sm">View</Button>
                           </Link>
                         </TableCell>
@@ -155,27 +185,17 @@ export default function AdminDashboard() {
                 </TableBody>
               </Table>
             </div>
-            
+
             {surveysData && surveysData.total > limit && (
               <div className="flex items-center justify-between mt-4">
                 <p className="text-sm text-muted-foreground">
                   Showing {((page - 1) * limit) + 1} to {Math.min(page * limit, surveysData.total)} of {surveysData.total}
                 </p>
                 <div className="flex gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => setPage(p => Math.max(1, p - 1))}
-                    disabled={page === 1}
-                  >
+                  <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>
                     Previous
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => setPage(p => p + 1)}
-                    disabled={page * limit >= surveysData.total}
-                  >
+                  <Button variant="outline" size="sm" onClick={() => setPage((p) => p + 1)} disabled={page * limit >= surveysData.total}>
                     Next
                   </Button>
                 </div>

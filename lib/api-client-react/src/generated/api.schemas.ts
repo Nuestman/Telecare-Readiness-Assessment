@@ -13,6 +13,53 @@ export interface ErrorResponse {
   error: string;
 }
 
+export interface LoginInput {
+  email: string;
+  password: string;
+}
+
+export interface RegisterInput {
+  email: string;
+  /** @minLength 8 */
+  password: string;
+  /** @minLength 1 */
+  name: string;
+}
+
+export interface AuthSetupStatus {
+  registration_open: boolean;
+}
+
+export type AuthUserRole = typeof AuthUserRole[keyof typeof AuthUserRole];
+
+
+export const AuthUserRole = {
+  viewer: 'viewer',
+  analyst: 'analyst',
+  admin: 'admin',
+} as const;
+
+export interface AuthUser {
+  id: number;
+  email: string;
+  name: string;
+  role: AuthUserRole;
+}
+
+export interface AuthLogoutOk {
+  ok: boolean;
+}
+
+export interface CollectionStatus {
+  is_open: boolean;
+  /** @nullable */
+  opens_at: string | null;
+  /** @nullable */
+  closes_at: string | null;
+  /** @nullable */
+  message: string | null;
+}
+
 export interface SurveyInput {
   /** 18-30, 31-40, 41-50, 50+ */
   age_group: string;
@@ -147,6 +194,7 @@ export interface SurveyInput {
 
 export interface Survey {
   id: number;
+  study_slug?: string;
   age_group: string;
   gender: string;
   employment_type: string;
@@ -226,6 +274,8 @@ export type SurveyStatsWillingForFollowupTelecareBreakdown = {[key: string]: num
 
 export type SurveyStatsWillingForNcdTelecareBreakdown = {[key: string]: number};
 
+export type SurveyStatsWillingnessBreakdown = {[key: string]: number};
+
 export interface SurveyStats {
   total_responses: number;
   employment_type_breakdown: SurveyStatsEmploymentTypeBreakdown;
@@ -239,6 +289,10 @@ export interface SurveyStats {
   avg_willingness_score: number;
   willing_for_followup_telecare_breakdown: SurveyStatsWillingForFollowupTelecareBreakdown;
   willing_for_ncd_telecare_breakdown: SurveyStatsWillingForNcdTelecareBreakdown;
+  avg_privacy_concern: number;
+  avg_technical_concern: number;
+  avg_effectiveness_concern: number;
+  willingness_breakdown: SurveyStatsWillingnessBreakdown;
 }
 
 export type ListSurveysParams = {
@@ -246,5 +300,27 @@ page?: number;
 limit?: number;
 employment_type?: string;
 has_ncd?: string;
+work_area?: string;
+date_from?: string;
+date_to?: string;
+min_willingness?: number;
+};
+
+export type GetSurveyStatsParams = {
+employment_type?: string;
+has_ncd?: string;
+work_area?: string;
+date_from?: string;
+date_to?: string;
+min_willingness?: number;
+};
+
+export type ExportSurveysParams = {
+employment_type?: string;
+has_ncd?: string;
+work_area?: string;
+date_from?: string;
+date_to?: string;
+min_willingness?: number;
 };
 

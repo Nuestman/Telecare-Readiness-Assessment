@@ -1,58 +1,78 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { setExtraHeaders } from '@workspace/api-client-react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+  useCallback,
+} from 'react';
+import { useGetAuthMe, getGetAuthMeQueryKey } from '@workspace/api-client-react';
+import { useQueryClient } from '@tanstack/react-query';
 
-const STORAGE_KEY = 'aga_admin_key';
+interface AdminUser {
+  id: number;
+  email: string;
+  name: string;
+  role: 'viewer' | 'analyst' | 'admin';
+}
 
 interface AdminContextValue {
   isAuthenticated: boolean;
-  adminKey: string;
-  login: (key: string) => Promise<boolean>;
-  logout: () => void;
+  isLoading: boolean;
+  user: AdminUser | null;
+  logout: () => Promise<void>;
+  refresh: () => Promise<AdminUser | null>;
 }
 
 const AdminContext = createContext<AdminContextValue | null>(null);
 
 export function AdminProvider({ children }: { children: ReactNode }) {
-  const [adminKey, setAdminKey] = useState<string>('');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const queryClient = useQueryClient();
+  const { data, isLoading, refetch } = useGetAuthMe({
+    query: {
+      queryKey: getGetAuthMeQueryKey(),
+      retry: false,
+      throwOnError: false,
+    },
+  });
 
-  // Restore session from localStorage on mount
+  const [user, setUser] = useState<AdminUser | null>(null);
+
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      setAdminKey(stored);
-      setIsAuthenticated(true);
-      setExtraHeaders({ 'x-admin-key': stored });
+    if (data) {
+      setUser(data as AdminUser);
     }
-  }, []);
+  }, [data]);
 
-  const login = async (key: string): Promise<boolean> => {
-    // Verify the key against the API before accepting it
-    try {
-      const res = await fetch('/api/surveys/stats', {
-        headers: { 'x-admin-key': key },
-      });
-      if (!res.ok) return false;
+  const logout = useCallback(async () => {
+    await fetch('/api/auth/logout', {
+      method: 'POST',
+      credentials: 'include',
+    });
+    setUser(null);
+    await queryClient.invalidateQueries({ queryKey: getGetAuthMeQueryKey() });
+  }, [queryClient]);
 
-      setAdminKey(key);
-      setIsAuthenticated(true);
-      setExtraHeaders({ 'x-admin-key': key });
-      localStorage.setItem(STORAGE_KEY, key);
-      return true;
-    } catch {
-      return false;
+  const refresh = useCallback(async () => {
+    const result = await refetch();
+    if (result.data) {
+      setUser(result.data as AdminUser);
+      return result.data as AdminUser;
     }
-  };
-
-  const logout = () => {
-    setAdminKey('');
-    setIsAuthenticated(false);
-    setExtraHeaders({});
-    localStorage.removeItem(STORAGE_KEY);
-  };
+    setUser(null);
+    return null;
+  }, [refetch]);
 
   return (
-    <AdminContext.Provider value={{ isAuthenticated, adminKey, login, logout }}>
+    <AdminContext.Provider
+      value={{
+        isAuthenticated: !!user,
+        isLoading,
+        user,
+        logout,
+        refresh,
+      }}
+    >
       {children}
     </AdminContext.Provider>
   );

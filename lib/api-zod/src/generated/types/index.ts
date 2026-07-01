@@ -6,9 +6,18 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './authLogoutOk';
+export * from './authSetupStatus';
+export * from './authUser';
+export * from './authUserRole';
+export * from './collectionStatus';
 export * from './errorResponse';
+export * from './exportSurveysParams';
+export * from './getSurveyStatsParams';
 export * from './healthStatus';
 export * from './listSurveysParams';
+export * from './loginInput';
+export * from './registerInput';
 export * from './survey';
 export * from './surveyInput';
 export * from './surveyListResponse';
@@ -20,3 +29,4 @@ export * from './surveyStatsGenderBreakdown';
 export * from './surveyStatsHasNcdBreakdown';
 export * from './surveyStatsWillingForFollowupTelecareBreakdown';
 export * from './surveyStatsWillingForNcdTelecareBreakdown';
+export * from './surveyStatsWillingnessBreakdown';

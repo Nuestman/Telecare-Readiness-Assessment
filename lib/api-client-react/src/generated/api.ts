@@ -20,9 +20,17 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AuthLogoutOk,
+  AuthSetupStatus,
+  AuthUser,
+  CollectionStatus,
   ErrorResponse,
+  ExportSurveysParams,
+  GetSurveyStatsParams,
   HealthStatus,
   ListSurveysParams,
+  LoginInput,
+  RegisterInput,
   Survey,
   SurveyInput,
   SurveyListResponse,
@@ -134,12 +142,453 @@ export function useHealthCheck<TData = Awaited<ReturnType<typeof healthCheck>>, 
 
 
 
+export const getGetAuthSetupStatusUrl = () => {
+
+
+
+
+  return `/api/auth/setup-status`
+}
+
+/**
+ * @summary Whether first-time admin registration is available
+ */
+export const getAuthSetupStatus = async ( options?: RequestInit): Promise<AuthSetupStatus> => {
+
+  return customFetch<AuthSetupStatus>(getGetAuthSetupStatusUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAuthSetupStatusQueryKey = () => {
+    return [
+    `/api/auth/setup-status`
+    ] as const;
+    }
+
+
+export const getGetAuthSetupStatusQueryOptions = <TData = Awaited<ReturnType<typeof getAuthSetupStatus>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAuthSetupStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAuthSetupStatusQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAuthSetupStatus>>> = ({ signal }) => getAuthSetupStatus({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAuthSetupStatus>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAuthSetupStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getAuthSetupStatus>>>
+export type GetAuthSetupStatusQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Whether first-time admin registration is available
+ */
+
+export function useGetAuthSetupStatus<TData = Awaited<ReturnType<typeof getAuthSetupStatus>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAuthSetupStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAuthSetupStatusQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getRegisterAdminUrl = () => {
+
+
+
+
+  return `/api/auth/register`
+}
+
+/**
+ * @summary Create the first admin account (one-time)
+ */
+export const registerAdmin = async (registerInput: RegisterInput, options?: RequestInit): Promise<AuthUser> => {
+
+  return customFetch<AuthUser>(getRegisterAdminUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(registerInput)
+  }
+);}
+
+
+
+
+export const getRegisterAdminMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerAdmin>>, TError,{data: BodyType<RegisterInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof registerAdmin>>, TError,{data: BodyType<RegisterInput>}, TContext> => {
+
+const mutationKey = ['registerAdmin'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof registerAdmin>>, {data: BodyType<RegisterInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  registerAdmin(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RegisterAdminMutationResult = NonNullable<Awaited<ReturnType<typeof registerAdmin>>>
+    export type RegisterAdminMutationBody = BodyType<RegisterInput>
+    export type RegisterAdminMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Create the first admin account (one-time)
+ */
+export const useRegisterAdmin = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerAdmin>>, TError,{data: BodyType<RegisterInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof registerAdmin>>,
+        TError,
+        {data: BodyType<RegisterInput>},
+        TContext
+      > => {
+      return useMutation(getRegisterAdminMutationOptions(options));
+    }
+
+export const getLoginUrl = () => {
+
+
+
+
+  return `/api/auth/login`
+}
+
+/**
+ * @summary Admin login
+ */
+export const login = async (loginInput: LoginInput, options?: RequestInit): Promise<AuthUser> => {
+
+  return customFetch<AuthUser>(getLoginUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(loginInput)
+  }
+);}
+
+
+
+
+export const getLoginMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: BodyType<LoginInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: BodyType<LoginInput>}, TContext> => {
+
+const mutationKey = ['login'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof login>>, {data: BodyType<LoginInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  login(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type LoginMutationResult = NonNullable<Awaited<ReturnType<typeof login>>>
+    export type LoginMutationBody = BodyType<LoginInput>
+    export type LoginMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Admin login
+ */
+export const useLogin = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof login>>, TError,{data: BodyType<LoginInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof login>>,
+        TError,
+        {data: BodyType<LoginInput>},
+        TContext
+      > => {
+      return useMutation(getLoginMutationOptions(options));
+    }
+
+export const getLogoutUrl = () => {
+
+
+
+
+  return `/api/auth/logout`
+}
+
+/**
+ * @summary Admin logout
+ */
+export const logout = async ( options?: RequestInit): Promise<AuthLogoutOk> => {
+
+  return customFetch<AuthLogoutOk>(getLogoutUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getLogoutMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logout>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof logout>>, TError,void, TContext> => {
+
+const mutationKey = ['logout'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof logout>>, void> = () => {
+
+
+          return  logout(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type LogoutMutationResult = NonNullable<Awaited<ReturnType<typeof logout>>>
+
+    export type LogoutMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Admin logout
+ */
+export const useLogout = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof logout>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof logout>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getLogoutMutationOptions(options));
+    }
+
+export const getGetAuthMeUrl = () => {
+
+
+
+
+  return `/api/auth/me`
+}
+
+/**
+ * @summary Current admin session
+ */
+export const getAuthMe = async ( options?: RequestInit): Promise<AuthUser> => {
+
+  return customFetch<AuthUser>(getGetAuthMeUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAuthMeQueryKey = () => {
+    return [
+    `/api/auth/me`
+    ] as const;
+    }
+
+
+export const getGetAuthMeQueryOptions = <TData = Awaited<ReturnType<typeof getAuthMe>>, TError = ErrorType<ErrorResponse>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAuthMe>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAuthMeQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAuthMe>>> = ({ signal }) => getAuthMe({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAuthMe>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAuthMeQueryResult = NonNullable<Awaited<ReturnType<typeof getAuthMe>>>
+export type GetAuthMeQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Current admin session
+ */
+
+export function useGetAuthMe<TData = Awaited<ReturnType<typeof getAuthMe>>, TError = ErrorType<ErrorResponse>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAuthMe>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAuthMeQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetStudyCollectionStatusUrl = () => {
+
+
+
+
+  return `/api/studies/telehealth-readiness/status`
+}
+
+/**
+ * @summary Survey collection window status
+ */
+export const getStudyCollectionStatus = async ( options?: RequestInit): Promise<CollectionStatus> => {
+
+  return customFetch<CollectionStatus>(getGetStudyCollectionStatusUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetStudyCollectionStatusQueryKey = () => {
+    return [
+    `/api/studies/telehealth-readiness/status`
+    ] as const;
+    }
+
+
+export const getGetStudyCollectionStatusQueryOptions = <TData = Awaited<ReturnType<typeof getStudyCollectionStatus>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStudyCollectionStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetStudyCollectionStatusQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getStudyCollectionStatus>>> = ({ signal }) => getStudyCollectionStatus({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getStudyCollectionStatus>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetStudyCollectionStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getStudyCollectionStatus>>>
+export type GetStudyCollectionStatusQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Survey collection window status
+ */
+
+export function useGetStudyCollectionStatus<TData = Awaited<ReturnType<typeof getStudyCollectionStatus>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getStudyCollectionStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetStudyCollectionStatusQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
 export const getSubmitSurveyUrl = () => {
 
 
 
 
-  return `/api/surveys`
+  return `/api/studies/telehealth-readiness/surveys`
 }
 
 /**
@@ -217,7 +666,7 @@ export const getListSurveysUrl = (params?: ListSurveysParams,) => {
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/surveys?${stringifiedParams}` : `/api/surveys`
+  return stringifiedParams.length > 0 ? `/api/studies/telehealth-readiness/surveys?${stringifiedParams}` : `/api/studies/telehealth-readiness/surveys`
 }
 
 /**
@@ -241,7 +690,7 @@ export const listSurveys = async (params?: ListSurveysParams, options?: RequestI
 
 export const getListSurveysQueryKey = (params?: ListSurveysParams,) => {
     return [
-    `/api/surveys`, ...(params ? [params] : [])
+    `/api/studies/telehealth-readiness/surveys`, ...(params ? [params] : [])
     ] as const;
     }
 
@@ -290,21 +739,28 @@ export function useListSurveys<TData = Awaited<ReturnType<typeof listSurveys>>, 
 
 
 
-export const getGetSurveyStatsUrl = () => {
+export const getGetSurveyStatsUrl = (params?: GetSurveyStatsParams,) => {
+  const normalizedParams = new URLSearchParams();
 
+  Object.entries(params || {}).forEach(([key, value]) => {
 
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
 
+  const stringifiedParams = normalizedParams.toString();
 
-  return `/api/surveys/stats`
+  return stringifiedParams.length > 0 ? `/api/studies/telehealth-readiness/surveys/stats?${stringifiedParams}` : `/api/studies/telehealth-readiness/surveys/stats`
 }
 
 /**
- * Returns summary statistics across all survey responses
+ * Returns summary statistics across survey responses
  * @summary Get aggregate statistics
  */
-export const getSurveyStats = async ( options?: RequestInit): Promise<SurveyStats> => {
+export const getSurveyStats = async (params?: GetSurveyStatsParams, options?: RequestInit): Promise<SurveyStats> => {
 
-  return customFetch<SurveyStats>(getGetSurveyStatsUrl(),
+  return customFetch<SurveyStats>(getGetSurveyStatsUrl(params),
   {
     ...options,
     method: 'GET'
@@ -317,23 +773,23 @@ export const getSurveyStats = async ( options?: RequestInit): Promise<SurveyStat
 
 
 
-export const getGetSurveyStatsQueryKey = () => {
+export const getGetSurveyStatsQueryKey = (params?: GetSurveyStatsParams,) => {
     return [
-    `/api/surveys/stats`
+    `/api/studies/telehealth-readiness/surveys/stats`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getGetSurveyStatsQueryOptions = <TData = Awaited<ReturnType<typeof getSurveyStats>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSurveyStats>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getGetSurveyStatsQueryOptions = <TData = Awaited<ReturnType<typeof getSurveyStats>>, TError = ErrorType<unknown>>(params?: GetSurveyStatsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSurveyStats>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetSurveyStatsQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getGetSurveyStatsQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSurveyStats>>> = ({ signal }) => getSurveyStats({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSurveyStats>>> = ({ signal }) => getSurveyStats(params, { signal, ...requestOptions });
 
 
 
@@ -351,11 +807,95 @@ export type GetSurveyStatsQueryError = ErrorType<unknown>
  */
 
 export function useGetSurveyStats<TData = Awaited<ReturnType<typeof getSurveyStats>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSurveyStats>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+ params?: GetSurveyStatsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSurveyStats>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getGetSurveyStatsQueryOptions(options)
+  const queryOptions = getGetSurveyStatsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getExportSurveysUrl = (params?: ExportSurveysParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/studies/telehealth-readiness/surveys/export?${stringifiedParams}` : `/api/studies/telehealth-readiness/surveys/export`
+}
+
+/**
+ * @summary Export survey responses as CSV
+ */
+export const exportSurveys = async (params?: ExportSurveysParams, options?: RequestInit): Promise<string> => {
+
+  return customFetch<string>(getExportSurveysUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getExportSurveysQueryKey = (params?: ExportSurveysParams,) => {
+    return [
+    `/api/studies/telehealth-readiness/surveys/export`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getExportSurveysQueryOptions = <TData = Awaited<ReturnType<typeof exportSurveys>>, TError = ErrorType<unknown>>(params?: ExportSurveysParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof exportSurveys>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getExportSurveysQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof exportSurveys>>> = ({ signal }) => exportSurveys(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof exportSurveys>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ExportSurveysQueryResult = NonNullable<Awaited<ReturnType<typeof exportSurveys>>>
+export type ExportSurveysQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Export survey responses as CSV
+ */
+
+export function useExportSurveys<TData = Awaited<ReturnType<typeof exportSurveys>>, TError = ErrorType<unknown>>(
+ params?: ExportSurveysParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof exportSurveys>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getExportSurveysQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -373,7 +913,7 @@ export const getGetSurveyUrl = (id: number,) => {
 
 
 
-  return `/api/surveys/${id}`
+  return `/api/studies/telehealth-readiness/surveys/${id}`
 }
 
 /**
@@ -396,7 +936,7 @@ export const getSurvey = async (id: number, options?: RequestInit): Promise<Surv
 
 export const getGetSurveyQueryKey = (id: number,) => {
     return [
-    `/api/surveys/${id}`
+    `/api/studies/telehealth-readiness/surveys/${id}`
     ] as const;
     }
 

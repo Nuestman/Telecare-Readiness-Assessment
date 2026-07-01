@@ -10,8 +10,12 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Admin authentication
+  - name: studies
+    description: Study collection status
   - name: surveys
-    description: Survey submission and retrieval
+    description: Telehealth readiness survey submission and retrieval
 paths:
   /healthz:
     get:
@@ -27,7 +31,121 @@ paths:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
 
-  /surveys:
+  /auth/setup-status:
+    get:
+      operationId: getAuthSetupStatus
+      tags: [auth]
+      summary: Whether first-time admin registration is available
+      responses:
+        "200":
+          description: Setup status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSetupStatus"
+
+  /auth/register:
+    post:
+      operationId: registerAdmin
+      tags: [auth]
+      summary: Create the first admin account (one-time)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInput"
+      responses:
+        "201":
+          description: Admin created and logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Registration closed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Admin login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Admin logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthLogoutOk"
+
+  /auth/me:
+    get:
+      operationId: getAuthMe
+      tags: [auth]
+      summary: Current admin session
+      responses:
+        "200":
+          description: Authenticated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUser"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /studies/telehealth-readiness/status:
+    get:
+      operationId: getStudyCollectionStatus
+      tags: [studies]
+      summary: Survey collection window status
+      responses:
+        "200":
+          description: Collection status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CollectionStatus"
+
+  /studies/telehealth-readiness/surveys:
     post:
       operationId: submitSurvey
       tags: [surveys]
@@ -77,6 +195,24 @@ paths:
           in: query
           schema:
             type: string
+        - name: work_area
+          in: query
+          schema:
+            type: string
+        - name: date_from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: date_to
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: min_willingness
+          in: query
+          schema:
+            type: integer
       responses:
         "200":
           description: List of surveys
@@ -85,12 +221,39 @@ paths:
               schema:
                 $ref: "#/components/schemas/SurveyListResponse"
 
-  /surveys/stats:
+  /studies/telehealth-readiness/surveys/stats:
     get:
       operationId: getSurveyStats
       tags: [surveys]
       summary: Get aggregate statistics
-      description: Returns summary statistics across all survey responses
+      description: Returns summary statistics across survey responses
+      parameters:
+        - name: employment_type
+          in: query
+          schema:
+            type: string
+        - name: has_ncd
+          in: query
+          schema:
+            type: string
+        - name: work_area
+          in: query
+          schema:
+            type: string
+        - name: date_from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: date_to
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: min_willingness
+          in: query
+          schema:
+            type: integer
       responses:
         "200":
           description: Aggregate statistics
@@ -99,7 +262,47 @@ paths:
               schema:
                 $ref: "#/components/schemas/SurveyStats"
 
-  /surveys/{id}:
+  /studies/telehealth-readiness/surveys/export:
+    get:
+      operationId: exportSurveys
+      tags: [surveys]
+      summary: Export survey responses as CSV
+      parameters:
+        - name: employment_type
+          in: query
+          schema:
+            type: string
+        - name: has_ncd
+          in: query
+          schema:
+            type: string
+        - name: work_area
+          in: query
+          schema:
+            type: string
+        - name: date_from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: date_to
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: min_willingness
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: CSV file
+          content:
+            text/csv:
+              schema:
+                type: string
+
+  /studies/telehealth-readiness/surveys/{id}:
     get:
       operationId: getSurvey
       tags: [surveys]
@@ -141,6 +344,88 @@ components:
           type: string
       required:
         - error
+
+    LoginInput:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    RegisterInput:
+      type: object
+      required:
+        - email
+        - password
+        - name
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        name:
+          type: string
+          minLength: 1
+
+    AuthSetupStatus:
+      type: object
+      required:
+        - registration_open
+      properties:
+        registration_open:
+          type: boolean
+
+    AuthUser:
+      type: object
+      required:
+        - id
+        - email
+        - name
+        - role
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum: [viewer, analyst, admin]
+
+    AuthLogoutOk:
+      type: object
+      required:
+        - ok
+      properties:
+        ok:
+          type: boolean
+
+    CollectionStatus:
+      type: object
+      required:
+        - is_open
+        - opens_at
+        - closes_at
+        - message
+      properties:
+        is_open:
+          type: boolean
+        opens_at:
+          type: ["string", "null"]
+          format: date-time
+        closes_at:
+          type: ["string", "null"]
+          format: date-time
+        message:
+          type: ["string", "null"]
 
     SurveyInput:
       type: object
@@ -290,6 +575,8 @@ components:
       properties:
         id:
           type: integer
+        study_slug:
+          type: string
         age_group:
           type: string
         gender:
@@ -394,6 +681,10 @@ components:
         - avg_willingness_score
         - willing_for_followup_telecare_breakdown
         - willing_for_ncd_telecare_breakdown
+        - avg_privacy_concern
+        - avg_technical_concern
+        - avg_effectiveness_concern
+        - willingness_breakdown
       properties:
         total_responses:
           type: integer
@@ -430,6 +721,16 @@ components:
           additionalProperties:
             type: integer
         willing_for_ncd_telecare_breakdown:
+          type: object
+          additionalProperties:
+            type: integer
+        avg_privacy_concern:
+          type: number
+        avg_technical_concern:
+          type: number
+        avg_effectiveness_concern:
+          type: number
+        willingness_breakdown:
           type: object
           additionalProperties:
             type: integer

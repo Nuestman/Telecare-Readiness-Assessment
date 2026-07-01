@@ -11,4 +11,8 @@ page?: number;
 limit?: number;
 employment_type?: string;
 has_ncd?: string;
+work_area?: string;
+date_from?: Date;
+date_to?: Date;
+min_willingness?: number;
 };

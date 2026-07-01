@@ -83,14 +83,23 @@ This runs Orval against `openapi.yaml` and regenerates both libraries, then runs
 
 ## 7. Authentication & Authorization
 
-There is no formal user account system. The admin dashboard is protected by a **shared admin key**:
+Admin access uses **email/password login** with server-side sessions (`express-session` + PostgreSQL store).
 
-- The server expects the key in the `x-admin-key` header or `admin_key` query parameter.
-- Default key: `aga-admin` (override with `ADMIN_KEY` environment variable before production).
-- The React app stores the key in `localStorage` after the login modal verifies it against `/api/surveys/stats`.
-- `setExtraHeaders({ 'x-admin-key': key })` in the API client attaches the key to every request automatically.
+- `POST /api/auth/login` — creates session cookie
+- `POST /api/auth/logout` — destroys session
+- `GET /api/auth/me` — current user
 
-**Security note:** Rotate the default key before deployment. This is a single shared secret suitable for a small research team; it is not a multi-user RBAC system.
+Roles:
+
+| Role | Permissions |
+|------|-------------|
+| `viewer` | Read stats, list, detail |
+| `analyst` | viewer + CSV export |
+| `admin` | analyst + user management (future) |
+
+Bootstrap the first admin at `/studies/telehealth-readiness/admin/register` (one-time; closes after the first account is created). Then use `/admin/login` for all sign-ins.
+
+Legacy `x-admin-key` / `ADMIN_KEY` authentication has been removed.
 
 ## 8. Frontend Routing
 
@@ -98,12 +107,15 @@ Managed by Wouter with the artifact base path:
 
 | Path | Purpose | Auth required |
 |---|---|---|
-| `/` | Research landing page with study info and admin login | No |
-| `/survey` | Multi-step questionnaire | No |
-| `/admin` | Admin dashboard | Yes |
-| `/admin/survey/:id` | Single response detail | Yes |
+| `/studies/telehealth-readiness` | Research landing page | No |
+| `/studies/telehealth-readiness/survey` | Multi-step questionnaire | No |
+| `/studies/telehealth-readiness/admin/login` | Admin login | No |
+| `/studies/telehealth-readiness/admin/register` | One-time first admin setup | No (only while no admins exist) |
+| `/studies/telehealth-readiness/admin` | Admin dashboard | Yes |
+| `/studies/telehealth-readiness/admin/report` | Printable pilot report | Yes |
+| `/studies/telehealth-readiness/admin/responses/:id` | Single response detail | Yes |
 
-Unauthenticated users trying to access `/admin` are redirected to `/`.
+Legacy paths (`/`, `/survey`, `/admin`, …) redirect to the canonical study routes.
 
 ## 9. Survey Flow
 
@@ -137,13 +149,26 @@ Key environment variables:
 | Variable | Used by | Notes |
 |---|---|---|
 | `DATABASE_URL` | `lib/db` | PostgreSQL connection string |
-| `ADMIN_KEY` | `api-server` | Admin dashboard secret (default `aga-admin`) |
-| `PORT` | All workflows | Assigned by Replit per artifact |
-| `SESSION_SECRET` | Available secret | Not currently used by this app |
+| `SESSION_SECRET` | `api-server` | Session cookie signing secret |
+| `SURVEY_OPENS_AT` / `SURVEY_CLOSES_AT` | `api-server` | Optional collection window |
+| `CORS_ORIGINS` | `api-server` | Production CORS allowlist |
+
+### One database URL, many environments
+
+The app uses **one** `DATABASE_URL` at runtime. Replit/Neon may show separate **development** and **production** database entries in the UI — those are different connection strings (often different Neon branches).
+
+Schema drift happens when:
+
+1. `pnpm --filter @workspace/db run push` is run locally against the URL in your `.env`, but Replit production uses a **different** secret.
+2. The original Replit deploy only created `surveys`; later pilot work added `admin_users`, `session`, and `study_slug` without pushing to every database.
+
+**Fix:** Run `pnpm --filter @workspace/db run push` once per database you actually use (copy each branch’s connection string into `.env`, push, repeat). For production on Replit, run push in the Replit shell with production `DATABASE_URL` set, or point local `.env` at production temporarily.
+
+Expected tables after a full push: `surveys`, `admin_users`, `session`.
 
 ### Schema changes
 
-Apply schema changes to the dev database with:
+Apply schema changes with:
 
 ```bash
 pnpm --filter @workspace/db run push
@@ -181,7 +206,7 @@ pnpm --filter @workspace/db run push
 
 ## 14. Known Limitations & Decisions
 
-- **Single shared admin key:** Chosen to keep the research team workflow simple. For a larger deployment, replace with a proper auth provider (e.g., Clerk or Replit Auth).
+- **Session-based admin auth** with roles; suitable for a small research team and future research hub.
 - **No PII collected:** Survey is intentionally anonymous. Admin dashboard only sees aggregate and anonymous responses.
 - **Likert values stored as strings:** The 1–5 scales are stored as strings for consistency with other categorical fields; statistics are parsed to integers in the aggregate route.
 - **Multi-select stored as CSV:** Simplifies the relational schema and aggregation logic for this single-table design.

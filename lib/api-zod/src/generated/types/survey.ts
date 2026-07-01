@@ -8,6 +8,7 @@
 
 export interface Survey {
   id: number;
+  study_slug?: string;
   age_group: string;
   gender: string;
   employment_type: string;

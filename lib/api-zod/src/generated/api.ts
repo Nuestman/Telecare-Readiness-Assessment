@@ -18,6 +18,82 @@ export const HealthCheckResponse = zod.object({
 
 
 /**
+ * @summary Whether first-time admin registration is available
+ */
+export const GetAuthSetupStatusResponse = zod.object({
+  "registration_open": zod.boolean()
+})
+
+
+/**
+ * @summary Create the first admin account (one-time)
+ */
+export const registerAdminBodyPasswordMin = 8;
+
+
+
+
+export const RegisterAdminBody = zod.object({
+  "email": zod.string().email(),
+  "password": zod.string().min(registerAdminBodyPasswordMin),
+  "name": zod.string().min(1)
+})
+
+export const RegisterAdminResponse = zod.object({
+  "id": zod.number(),
+  "email": zod.string(),
+  "name": zod.string(),
+  "role": zod.enum(['viewer', 'analyst', 'admin'])
+})
+
+
+/**
+ * @summary Admin login
+ */
+export const LoginBody = zod.object({
+  "email": zod.string().email(),
+  "password": zod.string()
+})
+
+export const LoginResponse = zod.object({
+  "id": zod.number(),
+  "email": zod.string(),
+  "name": zod.string(),
+  "role": zod.enum(['viewer', 'analyst', 'admin'])
+})
+
+
+/**
+ * @summary Admin logout
+ */
+export const LogoutResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+/**
+ * @summary Current admin session
+ */
+export const GetAuthMeResponse = zod.object({
+  "id": zod.number(),
+  "email": zod.string(),
+  "name": zod.string(),
+  "role": zod.enum(['viewer', 'analyst', 'admin'])
+})
+
+
+/**
+ * @summary Survey collection window status
+ */
+export const GetStudyCollectionStatusResponse = zod.object({
+  "is_open": zod.boolean(),
+  "opens_at": zod.coerce.date().nullable(),
+  "closes_at": zod.coerce.date().nullable(),
+  "message": zod.string().nullable()
+})
+
+
+/**
  * Submit a completed telehealth readiness questionnaire
  * @summary Submit a survey response
  */
@@ -59,6 +135,7 @@ export const SubmitSurveyBody = zod.object({
 
 export const SubmitSurveyResponse = zod.object({
   "id": zod.number(),
+  "study_slug": zod.string().optional(),
   "age_group": zod.string(),
   "gender": zod.string(),
   "employment_type": zod.string(),
@@ -107,12 +184,17 @@ export const ListSurveysQueryParams = zod.object({
   "page": zod.coerce.number().default(listSurveysQueryPageDefault),
   "limit": zod.coerce.number().default(listSurveysQueryLimitDefault),
   "employment_type": zod.coerce.string().optional(),
-  "has_ncd": zod.coerce.string().optional()
+  "has_ncd": zod.coerce.string().optional(),
+  "work_area": zod.coerce.string().optional(),
+  "date_from": zod.date().optional(),
+  "date_to": zod.date().optional(),
+  "min_willingness": zod.coerce.number().optional()
 })
 
 export const ListSurveysResponse = zod.object({
   "surveys": zod.array(zod.object({
   "id": zod.number(),
+  "study_slug": zod.string().optional(),
   "age_group": zod.string(),
   "gender": zod.string(),
   "employment_type": zod.string(),
@@ -155,9 +237,18 @@ export const ListSurveysResponse = zod.object({
 
 
 /**
- * Returns summary statistics across all survey responses
+ * Returns summary statistics across survey responses
  * @summary Get aggregate statistics
  */
+export const GetSurveyStatsQueryParams = zod.object({
+  "employment_type": zod.coerce.string().optional(),
+  "has_ncd": zod.coerce.string().optional(),
+  "work_area": zod.coerce.string().optional(),
+  "date_from": zod.date().optional(),
+  "date_to": zod.date().optional(),
+  "min_willingness": zod.coerce.number().optional()
+})
+
 export const GetSurveyStatsResponse = zod.object({
   "total_responses": zod.number(),
   "employment_type_breakdown": zod.record(zod.string(), zod.number()),
@@ -170,8 +261,27 @@ export const GetSurveyStatsResponse = zod.object({
   "heard_of_telehealth_rate": zod.number(),
   "avg_willingness_score": zod.number(),
   "willing_for_followup_telecare_breakdown": zod.record(zod.string(), zod.number()),
-  "willing_for_ncd_telecare_breakdown": zod.record(zod.string(), zod.number())
+  "willing_for_ncd_telecare_breakdown": zod.record(zod.string(), zod.number()),
+  "avg_privacy_concern": zod.number(),
+  "avg_technical_concern": zod.number(),
+  "avg_effectiveness_concern": zod.number(),
+  "willingness_breakdown": zod.record(zod.string(), zod.number())
 })
+
+
+/**
+ * @summary Export survey responses as CSV
+ */
+export const ExportSurveysQueryParams = zod.object({
+  "employment_type": zod.coerce.string().optional(),
+  "has_ncd": zod.coerce.string().optional(),
+  "work_area": zod.coerce.string().optional(),
+  "date_from": zod.date().optional(),
+  "date_to": zod.date().optional(),
+  "min_willingness": zod.coerce.number().optional()
+})
+
+export const ExportSurveysResponse = zod.unknown()
 
 
 /**
@@ -183,6 +293,7 @@ export const GetSurveyParams = zod.object({
 
 export const GetSurveyResponse = zod.object({
   "id": zod.number(),
+  "study_slug": zod.string().optional(),
   "age_group": zod.string(),
   "gender": zod.string(),
   "employment_type": zod.string(),

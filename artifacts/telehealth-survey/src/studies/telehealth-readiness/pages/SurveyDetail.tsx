@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, User, Activity, Smartphone, PhoneCall, AlertTriangle, MessageSquare } from "lucide-react";
+import { ArrowLeft, User, Activity, Smartphone, PhoneCall, AlertTriangle } from "lucide-react";
+import { studyPaths } from "@/studies/telehealth-readiness/paths";
 
 function Section({ title, icon: Icon, children }: { title: string, icon: any, children: React.ReactNode }) {
   return (
@@ -58,7 +59,7 @@ export default function SurveyDetail() {
       <AdminLayout>
         <div className="text-center py-12">
           <p className="text-destructive font-medium">Survey not found or an error occurred.</p>
-          <Link href="/admin">
+          <Link href={studyPaths.admin}>
             <Button variant="outline" className="mt-4">Back to Dashboard</Button>
           </Link>
         </div>
@@ -80,7 +81,7 @@ export default function SurveyDetail() {
     <AdminLayout>
       <div className="space-y-6">
         <div className="flex items-center gap-4">
-          <Link href="/admin">
+          <Link href={studyPaths.admin}>
             <Button variant="outline" size="icon">
               <ArrowLeft className="w-4 h-4" />
             </Button>

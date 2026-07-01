@@ -1,8 +1,8 @@
-import { useState, useId } from "react";
+import { useState, useId, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useSubmitSurvey } from "@workspace/api-client-react";
+import { useSubmitSurvey, useGetStudyCollectionStatus } from "@workspace/api-client-react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -134,6 +134,8 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 import { Label } from "@/components/ui/label";
+import { telehealthStudyConfig as cfg } from "@/studies/telehealth-readiness/config";
+import { studyPaths } from "@/studies/telehealth-readiness/paths";
 
 const defaultValues: FormValues = {
   age_group: "", gender: "", employment_type: "", contractor_company: "", work_area: "", work_area_other: "", years_at_aga: "",
@@ -163,6 +165,9 @@ export default function SurveyPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [, navigate] = useLocation();
+  const formStartedAt = useRef(new Date().toISOString());
+  const { data: collectionStatus } = useGetStudyCollectionStatus();
+  const surveyOpen = collectionStatus?.is_open !== false;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -217,6 +222,7 @@ export default function SurveyPage() {
   const submitForm = () => {
     setIsSubmitting(true);
     const data = getValues();
+    const honeypot = (document.querySelector('input[name="website"]') as HTMLInputElement | null)?.value ?? "";
     
     // Transform arrays to comma-separated strings
     const payload = {
@@ -239,7 +245,7 @@ export default function SurveyPage() {
       preferred_telehealth_use: data.preferred_telehealth_use.length > 0 ? toApiMultiSelect(data.preferred_telehealth_use) : null,
     };
 
-    submitSurvey.mutate({ data: payload as any }, {
+    submitSurvey.mutate({ data: { ...payload, website: honeypot, form_started_at: formStartedAt.current } as any }, {
       onSuccess: () => {
         setIsSuccess(true);
         setStep(9); // Success screen
@@ -268,7 +274,19 @@ export default function SurveyPage() {
       <div className="bg-muted/40 rounded-xl border p-5 space-y-4 text-sm text-muted-foreground leading-relaxed">
         <div>
           <p className="font-semibold text-foreground mb-1">Study Title</p>
-          <p>Assessment of Telehealth Readiness Among AGA Obuasi Mine Employees and Contractors</p>
+          <p>{cfg.fullTitle}</p>
+        </div>
+        <div>
+          <p className="font-semibold text-foreground mb-1">Principal Investigator</p>
+          <p>{cfg.principalInvestigator}</p>
+        </div>
+        <div>
+          <p className="font-semibold text-foreground mb-1">Ethics Approval</p>
+          <p>{cfg.ethicsReference}</p>
+        </div>
+        <div>
+          <p className="font-semibold text-foreground mb-1">Contact</p>
+          <p>{cfg.contactEmail} · {cfg.contactPhone}</p>
         </div>
         <div>
           <p className="font-semibold text-foreground mb-1">Purpose</p>
@@ -321,7 +339,7 @@ export default function SurveyPage() {
       )} />
 
       <div className="flex gap-3 pt-2">
-        <Button type="button" variant="outline" className="flex-1" onClick={() => navigate('/')}>
+        <Button type="button" variant="outline" className="flex-1" onClick={() => navigate(studyPaths.landing)}>
           <ArrowLeft className="mr-2 w-4 h-4" /> Back to Home
         </Button>
         <Button
@@ -351,6 +369,22 @@ export default function SurveyPage() {
 
   const progress = (step / 8) * 100;
 
+  if (!surveyOpen) {
+    return (
+      <div className="min-h-screen bg-muted/30 flex items-center justify-center p-6">
+        <Card className="max-w-lg w-full">
+          <CardHeader>
+            <CardTitle>Survey unavailable</CardTitle>
+            <CardDescription>{collectionStatus?.message ?? 'Survey collection is currently closed.'}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => navigate(studyPaths.landing)}>Back to study home</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-muted/30">
       <div className="max-w-3xl mx-auto px-4 py-8 md:py-12">
@@ -369,6 +403,7 @@ export default function SurveyPage() {
 
         <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">
           <Form {...form}>
+            <input type="text" name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden="true" />
             <form onSubmit={(e) => e.preventDefault()} className="p-6 md:p-8 space-y-8">
               
               {step === 0 && renderConsent()}

@@ -11,7 +11,10 @@ A research web app for AGA Obuasi mine employees and contractors to assess their
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - Required env: `DATABASE_URL` — Postgres connection string
-- Optional env: `ADMIN_KEY` — Admin access key for the `/admin` dashboard (default: `aga-admin`)
+- Required env: `SESSION_SECRET` — session cookie signing secret
+- First deploy: visit `/studies/telehealth-readiness/admin/register` once to create the first admin (route closes automatically)
+- Optional env: `SURVEY_OPENS_AT`, `SURVEY_CLOSES_AT` — collection window
+- Optional env: `CORS_ORIGINS` — comma-separated allowed origins in production
 
 ## Stack
 
@@ -32,8 +35,9 @@ A research web app for AGA Obuasi mine employees and contractors to assess their
 
 ## Architecture decisions
 
-- Public questionnaire POST endpoint (`/api/surveys`) requires no auth — anyone with the link can submit.
-- Admin read endpoints (`GET /api/surveys`, `/api/surveys/stats`, `/api/surveys/:id`) require `x-admin-key` header or `?admin_key=` query param (default: `aga-admin`). Change via `ADMIN_KEY` env var before going to production.
+- Public questionnaire POST endpoint requires no auth — anyone with the link can submit (when collection is open).
+- Admin endpoints require session authentication (`POST /api/auth/login`). Roles: `viewer`, `analyst`, `admin`.
+- Canonical study routes: `/studies/telehealth-readiness/...` (legacy `/`, `/survey`, `/admin` redirect).
 - Multi-select fields (NCDs, barriers, telehealth uses) are stored as comma-separated strings.
 - No user accounts — participants are anonymous; only demographic info is collected.
 - Analysis not included in-app; all raw data accessible via the admin dashboard.
@@ -41,7 +45,7 @@ A research web app for AGA Obuasi mine employees and contractors to assess their
 ## Product
 
 - **Patient-facing (`/`)**: 8-section multi-step questionnaire covering demographics, NCD status, follow-up behaviour, technology access, telehealth awareness, willingness/readiness, concerns, and open-ended feedback. Ends with a thank-you screen.
-- **Admin dashboard (`/admin`)**: Stat cards (total submissions, NCD rate, avg willingness, telecare willingness), filterable table of all responses, full detail view per respondent.
+- **Admin dashboard (`/studies/telehealth-readiness/admin`)**: Stat cards, filterable charts, paginated table, CSV export, QR share link, printable pilot report.
 
 ## User preferences
 
@@ -50,8 +54,8 @@ _Populate as you build — explicit user instructions worth remembering across s
 ## Gotchas
 
 - After any change to `lib/api-spec/openapi.yaml`, run `pnpm --filter @workspace/api-spec run codegen` before touching frontend or backend code.
-- After any change to `lib/db/src/schema/`, run `pnpm run typecheck:libs` before building the API server.
-- Admin endpoints return 401 if the wrong/missing `ADMIN_KEY` is used. Frontend passes it via headers in API client calls.
+- After any change to `lib/db/src/schema/`, run `pnpm --filter @workspace/db run push` against **each** database you use (local `.env` and Replit production secrets). Replit/Neon “development” and “production” branches are separate databases.
+- Admin endpoints return 401 without a valid session. Log in at `/studies/telehealth-readiness/admin/login`. If no admin exists yet, use `/studies/telehealth-readiness/admin/register` once.
 
 ## Pointers
 

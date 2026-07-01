@@ -4,6 +4,7 @@ import { z } from "zod/v4";
 
 export const surveysTable = pgTable("surveys", {
   id: serial("id").primaryKey(),
+  study_slug: text("study_slug").notNull().default("telehealth-readiness"),
 
   // Section 1: Demographics
   age_group: text("age_group").notNull(),

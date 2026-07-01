@@ -12,6 +12,7 @@ import type { SurveyStatsGenderBreakdown } from './surveyStatsGenderBreakdown';
 import type { SurveyStatsHasNcdBreakdown } from './surveyStatsHasNcdBreakdown';
 import type { SurveyStatsWillingForFollowupTelecareBreakdown } from './surveyStatsWillingForFollowupTelecareBreakdown';
 import type { SurveyStatsWillingForNcdTelecareBreakdown } from './surveyStatsWillingForNcdTelecareBreakdown';
+import type { SurveyStatsWillingnessBreakdown } from './surveyStatsWillingnessBreakdown';
 
 export interface SurveyStats {
   total_responses: number;
@@ -26,4 +27,8 @@ export interface SurveyStats {
   avg_willingness_score: number;
   willing_for_followup_telecare_breakdown: SurveyStatsWillingForFollowupTelecareBreakdown;
   willing_for_ncd_telecare_breakdown: SurveyStatsWillingForNcdTelecareBreakdown;
+  avg_privacy_concern: number;
+  avg_technical_concern: number;
+  avg_effectiveness_concern: number;
+  willingness_breakdown: SurveyStatsWillingnessBreakdown;
 }
