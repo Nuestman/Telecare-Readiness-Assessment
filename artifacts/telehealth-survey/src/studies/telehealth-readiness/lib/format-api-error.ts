@@ -6,6 +6,10 @@ function readErrorField(data: unknown, key: string): string | undefined {
   return typeof value === 'string' && value.trim() ? value.trim() : undefined;
 }
 
+export function isPermissionError(error: unknown): boolean {
+  return error instanceof ApiError && error.status === 403;
+}
+
 export function formatApiError(error: unknown, fallback: string): string {
   if (error instanceof ApiError) {
     const fromBody =
@@ -19,7 +23,7 @@ export function formatApiError(error: unknown, fallback: string): string {
       return 'This action is not available. Restart the API server and try again.';
     }
     if (error.status === 403) {
-      return 'You do not have permission to perform this action.';
+      return fromBody ?? 'You do not have permission to perform this action.';
     }
     if (error.status === 401) {
       return 'Your session has expired. Sign in again.';

@@ -1,62 +1,72 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { AdminProvider, useAdmin } from '@/context/AdminContext';
+import { AdminProvider } from '@/context/AdminContext';
+import { SystemAdminProvider, useSystemAdmin } from '@/platform/context/SystemAdminContext';
+import PlatformLandingPage from '@/platform/pages/PlatformLandingPage';
+import SystemLoginPage from '@/platform/pages/system-admin/SystemLoginPage';
+import SystemDashboardPage from '@/platform/pages/system-admin/SystemDashboardPage';
+import SystemHealthPage from '@/platform/pages/system-admin/SystemHealthPage';
+import StudiesListPage from '@/platform/pages/system-admin/StudiesListPage';
+import StudyEditPage from '@/platform/pages/system-admin/StudyEditPage';
+import StudyAccessPage from '@/platform/pages/system-admin/StudyAccessPage';
+import SystemUsersPage from '@/platform/pages/system-admin/SystemUsersPage';
+import { systemAdminPaths, platformPaths } from '@/platform/paths';
+import { telehealthStudyRouteElements } from '@/studies/telehealth-readiness/study-routes';
+import { clinicianStudyRouteElements } from '@/studies/clinician-telehealth-readiness/study-routes';
+import { studyPaths as telehealthStudyPaths } from '@/studies/telehealth-readiness/paths';
 import NotFound from '@/pages/not-found';
-import AdminLoginPage from '@/studies/telehealth-readiness/pages/AdminLoginPage';
-import AdminRegisterPage from '@/studies/telehealth-readiness/pages/AdminRegisterPage';
-import AdminUsersPage from '@/studies/telehealth-readiness/pages/AdminUsersPage';
-import LandingPage from '@/studies/telehealth-readiness/pages/LandingPage';
-import SurveyPage from '@/studies/telehealth-readiness/pages/SurveyPage';
-import AdminDashboard from '@/studies/telehealth-readiness/pages/AdminDashboard';
-import AdminReportPage from '@/studies/telehealth-readiness/pages/AdminReportPage';
-import SurveyDetail from '@/studies/telehealth-readiness/pages/SurveyDetail';
-import { studyPaths } from '@/studies/telehealth-readiness/paths';
 import { Route, Switch, Router as WouterRouter, Redirect } from 'wouter';
 
 const queryClient = new QueryClient();
 
-function ProtectedAdminRoute({ component: Component }: { component: React.ComponentType }) {
-  const { isAuthenticated, isLoading } = useAdmin();
+function ProtectedSystemRoute({ component: Component }: { component: React.ComponentType }) {
+  const { isAuthenticated, isLoading } = useSystemAdmin();
   if (isLoading) return null;
-  if (!isAuthenticated) return <Redirect to={studyPaths.adminLogin} />;
+  if (!isAuthenticated) return <Redirect to={systemAdminPaths.login} />;
   return <Component />;
 }
 
-function Router() {
+function HubRouter() {
   return (
     <Switch>
-      <Route path={studyPaths.landing} component={LandingPage} />
-      <Route path={studyPaths.survey} component={SurveyPage} />
-      <Route path={studyPaths.adminLogin} component={AdminLoginPage} />
-      <Route path="/studies/telehealth-readiness/admin/register">
-        <Redirect to={studyPaths.registration} />
+      <Route path={platformPaths.landing} component={PlatformLandingPage} />
+      <Route path={platformPaths.studies}><Redirect to={platformPaths.landing} /></Route>
+
+      <Route path={systemAdminPaths.login} component={SystemLoginPage} />
+      <Route path={systemAdminPaths.dashboard}>
+        {() => <ProtectedSystemRoute component={SystemDashboardPage} />}
       </Route>
-      <Route path={studyPaths.registration} component={AdminRegisterPage} />
-      <Route path={studyPaths.adminUsers}>
-        {() => <ProtectedAdminRoute component={AdminUsersPage} />}
+      <Route path={systemAdminPaths.health}>
+        {() => <ProtectedSystemRoute component={SystemHealthPage} />}
       </Route>
-      <Route path={studyPaths.adminReport}>
-        {() => <ProtectedAdminRoute component={AdminReportPage} />}
+      <Route path={systemAdminPaths.studies}>
+        {() => <ProtectedSystemRoute component={StudiesListPage} />}
       </Route>
-      <Route path={studyPaths.admin}>
-        {() => <ProtectedAdminRoute component={AdminDashboard} />}
+      <Route path="/system/admin/studies/:slug/access">
+        {() => <ProtectedSystemRoute component={StudyAccessPage} />}
       </Route>
-      <Route path="/studies/telehealth-readiness/admin/responses/:id">
-        {() => <ProtectedAdminRoute component={SurveyDetail} />}
+      <Route path="/system/admin/studies/:slug">
+        {() => <ProtectedSystemRoute component={StudyEditPage} />}
+      </Route>
+      <Route path={systemAdminPaths.users}>
+        {() => <ProtectedSystemRoute component={SystemUsersPage} />}
       </Route>
 
-      <Route path="/"><Redirect to={studyPaths.landing} /></Route>
-      <Route path="/survey"><Redirect to={studyPaths.survey} /></Route>
-      <Route path="/registration"><Redirect to={studyPaths.registration} /></Route>
-      <Route path="/admin/register"><Redirect to={studyPaths.registration} /></Route>
-      <Route path="/admin/login"><Redirect to={studyPaths.adminLogin} /></Route>
-      <Route path="/admin/report"><Redirect to={studyPaths.adminReport} /></Route>
-      <Route path="/admin/users"><Redirect to={studyPaths.adminUsers} /></Route>
+      {/* Legacy telehealth URLs (pre multi-study paths) */}
+      <Route path="/survey"><Redirect to={telehealthStudyPaths.survey} /></Route>
+      <Route path="/registration"><Redirect to={telehealthStudyPaths.registration} /></Route>
+      <Route path="/admin/register"><Redirect to={telehealthStudyPaths.registration} /></Route>
+      <Route path="/admin/login"><Redirect to={telehealthStudyPaths.adminLogin} /></Route>
+      <Route path="/admin/report"><Redirect to={telehealthStudyPaths.adminReport} /></Route>
+      <Route path="/admin/users"><Redirect to={telehealthStudyPaths.adminUsers} /></Route>
       <Route path="/admin/survey/:id">
-        {(params) => <Redirect to={studyPaths.adminResponse(params.id)} />}
+        {(params) => <Redirect to={telehealthStudyPaths.adminResponse(params.id)} />}
       </Route>
-      <Route path="/admin"><Redirect to={studyPaths.admin} /></Route>
+      <Route path="/admin"><Redirect to={telehealthStudyPaths.admin} /></Route>
+
+      {telehealthStudyRouteElements}
+      {clinicianStudyRouteElements}
 
       <Route component={NotFound} />
     </Switch>
@@ -66,14 +76,16 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AdminProvider>
-        <TooltipProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-            <Router />
-          </WouterRouter>
-          <Toaster />
-        </TooltipProvider>
-      </AdminProvider>
+      <SystemAdminProvider>
+        <AdminProvider>
+          <TooltipProvider>
+            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+              <HubRouter />
+            </WouterRouter>
+            <Toaster />
+          </TooltipProvider>
+        </AdminProvider>
+      </SystemAdminProvider>
     </QueryClientProvider>
   );
 }

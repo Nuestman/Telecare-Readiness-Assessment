@@ -2,8 +2,15 @@ import { Router, type Request } from "express";
 import bcrypt from "bcryptjs";
 import { count, eq } from "drizzle-orm";
 import { z } from "zod";
-import { db, adminUsersTable } from "@workspace/db";
+import {
+  db,
+  adminUsersTable,
+  adminUserStudyAccessTable,
+  TELEHEALTH_STUDY_SLUG,
+} from "@workspace/db";
+import { isStudySession } from "../middleware/session-kind";
 import { requireAuth } from "../middleware/auth";
+import { loadStudyAccessForUser } from "../middleware/study-access";
 
 const router = Router();
 
@@ -16,6 +23,7 @@ const RegisterBody = z.object({
   email: z.string().email(),
   password: z.string().min(8),
   name: z.string().trim().min(1),
+  studySlug: z.string().optional(),
 });
 
 function attachSession(
@@ -28,6 +36,7 @@ function attachSession(
     status: "pending" | "approved" | "rejected";
   },
 ) {
+  req.session.sessionKind = "study";
   req.session.userId = user.id;
   req.session.email = user.email;
   req.session.name = user.name;
@@ -77,6 +86,7 @@ router.post("/auth/register", async (req, res) => {
   const email = parsed.data.email.trim().toLowerCase();
   const password_hash = await bcrypt.hash(parsed.data.password, 12);
   const isFirstUser = (await countApprovedAdmins()) === 0;
+  const studySlug = parsed.data.studySlug ?? TELEHEALTH_STUDY_SLUG;
 
   try {
     const [user] = await db
@@ -96,11 +106,25 @@ router.post("/auth/register", async (req, res) => {
         status: adminUsersTable.status,
       });
 
+    if (isFirstUser || studySlug) {
+      await db
+        .insert(adminUserStudyAccessTable)
+        .values({
+          admin_user_id: user.id,
+          study_slug: isFirstUser ? TELEHEALTH_STUDY_SLUG : studySlug,
+          role: user.role,
+        })
+        .onConflictDoNothing();
+    }
+
     if (user.status === "approved") {
       attachSession(req, user);
     }
 
-    res.status(201).json(publicUser(user));
+    res.status(201).json({
+      ...publicUser(user),
+      studySlug,
+    });
   } catch (err) {
     if (isUniqueViolation(err)) {
       res.status(409).json({ error: "An account with this email already exists" });
@@ -150,6 +174,9 @@ router.post("/auth/login", async (req, res) => {
   }
 
   attachSession(req, user);
+  if (!req.session.sessionKind) {
+    req.session.sessionKind = "study";
+  }
   req.log.info({ email, userId: user.id, role: user.role }, "Login succeeded");
   res.json(publicUser(user));
 });
@@ -166,7 +193,7 @@ router.post("/auth/logout", requireAuth, (req, res) => {
 });
 
 router.get("/auth/me", async (req, res) => {
-  if (!req.session.userId) {
+  if (!isStudySession(req) || !req.session.userId) {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
@@ -188,7 +215,12 @@ router.get("/auth/me", async (req, res) => {
     return;
   }
 
-  res.json(publicUser(user));
+  const studyAccess = await loadStudyAccessForUser(user.id);
+
+  res.json({
+    ...publicUser(user),
+    studyAccess,
+  });
 });
 
 export default router;

@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { FilterBar } from "@/studies/telehealth-readiness/components/FilterBar";
 import { AnalyticsCharts } from "@/studies/telehealth-readiness/components/AnalyticsCharts";
 import { downloadSurveyExport } from "@/studies/telehealth-readiness/lib/export-surveys";
-import { studyPaths } from "@/studies/telehealth-readiness/paths";
+import { studyPaths, STUDY_SLUG } from "@/studies/telehealth-readiness/paths";
 import { useAdmin } from "@/context/AdminContext";
 
 const defaultFilters: ListSurveysParams = {};
@@ -21,7 +21,7 @@ export default function AdminDashboard() {
   const [filters, setFilters] = useState<ListSurveysParams>(defaultFilters);
   const [exporting, setExporting] = useState(false);
   const limit = 20;
-  const { user } = useAdmin();
+  const { getStudyRole } = useAdmin();
 
   const queryParams = useMemo(
     () => ({ ...filters, page, limit }),
@@ -31,7 +31,9 @@ export default function AdminDashboard() {
   const { data: stats, isLoading: statsLoading } = useGetSurveyStats(filters);
   const { data: surveysData, isLoading: surveysLoading } = useListSurveys(queryParams);
 
-  const canExport = user?.role === 'analyst' || user?.role === 'admin';
+  const studyRole = getStudyRole(STUDY_SLUG);
+
+  const canExport = studyRole === 'analyst' || studyRole === 'admin';
 
   const handleExport = async () => {
     setExporting(true);

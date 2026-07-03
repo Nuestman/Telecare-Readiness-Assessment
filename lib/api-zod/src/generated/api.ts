@@ -409,3 +409,314 @@ export const GetSurveyResponse = zod.object({
 })
 
 
+/**
+ * @summary Clinician study collection window status
+ */
+export const GetClinicianStudyCollectionStatusResponse = zod.object({
+  "is_open": zod.boolean(),
+  "opens_at": zod.coerce.date().nullable(),
+  "closes_at": zod.coerce.date().nullable(),
+  "message": zod.string().nullable()
+})
+
+
+/**
+ * @summary Submit a clinician survey response
+ */
+export const SubmitClinicianSurveyBody = zod.object({
+  "clinical_role": zod.string(),
+  "clinical_role_other": zod.string().nullish(),
+  "department": zod.string(),
+  "department_other": zod.string().nullish(),
+  "years_in_clinical_practice": zod.string(),
+  "years_at_aga_health": zod.string(),
+  "telehealth_exposure_in_role": zod.string(),
+  "heard_of_telehealth": zod.string(),
+  "awareness_sources": zod.string().nullish(),
+  "awareness_sources_other": zod.string().nullish(),
+  "used_telehealth_before": zod.string(),
+  "used_modalities": zod.string().nullish(),
+  "national_policy_awareness": zod.string(),
+  "confidence_video_consultation": zod.string(),
+  "confidence_phone_followup": zod.string(),
+  "confidence_async_messaging": zod.string(),
+  "confidence_remote_vitals": zod.string(),
+  "confidence_digital_documentation": zod.string(),
+  "time_for_telehealth": zod.string(),
+  "documentation_burden_concern": zod.string(),
+  "workflow_integration": zod.string(),
+  "referral_pathway_clarity": zod.string(),
+  "team_coordination": zod.string(),
+  "comfort_clinical_decisions_remotely": zod.string().nullish(),
+  "comfort_patient_education_remotely": zod.string().nullish(),
+  "internet_at_workplace": zod.string(),
+  "power_reliability": zod.string(),
+  "device_availability": zod.string(),
+  "private_space_for_calls": zod.string(),
+  "facility_support": zod.string(),
+  "barrier_liability": zod.string(),
+  "barrier_privacy": zod.string(),
+  "barrier_patient_digital_literacy": zod.string(),
+  "barrier_language": zod.string(),
+  "barrier_technical_failure": zod.string(),
+  "barrier_effectiveness": zod.string(),
+  "other_barriers": zod.string().nullish(),
+  "other_barriers_text": zod.string().nullish(),
+  "received_telehealth_training": zod.string(),
+  "training_needs": zod.string(),
+  "training_format_preference": zod.string(),
+  "willing_to_provide_telehealth": zod.string(),
+  "willing_ncd_telecare": zod.string(),
+  "willing_routine_review": zod.string(),
+  "willing_triage": zod.string(),
+  "preferred_modalities": zod.string(),
+  "willing_prescribe_after_remote": zod.string().nullish(),
+  "willing_remote_monitoring": zod.string().nullish(),
+  "suggestions": zod.string().nullish(),
+  "consent_given": zod.boolean()
+})
+
+export const SubmitClinicianSurveyResponse = zod.object({
+  "clinical_role": zod.string(),
+  "clinical_role_other": zod.string().nullish(),
+  "department": zod.string(),
+  "department_other": zod.string().nullish(),
+  "years_in_clinical_practice": zod.string(),
+  "years_at_aga_health": zod.string(),
+  "telehealth_exposure_in_role": zod.string(),
+  "heard_of_telehealth": zod.string(),
+  "awareness_sources": zod.string().nullish(),
+  "awareness_sources_other": zod.string().nullish(),
+  "used_telehealth_before": zod.string(),
+  "used_modalities": zod.string().nullish(),
+  "national_policy_awareness": zod.string(),
+  "confidence_video_consultation": zod.string(),
+  "confidence_phone_followup": zod.string(),
+  "confidence_async_messaging": zod.string(),
+  "confidence_remote_vitals": zod.string(),
+  "confidence_digital_documentation": zod.string(),
+  "time_for_telehealth": zod.string(),
+  "documentation_burden_concern": zod.string(),
+  "workflow_integration": zod.string(),
+  "referral_pathway_clarity": zod.string(),
+  "team_coordination": zod.string(),
+  "comfort_clinical_decisions_remotely": zod.string().nullish(),
+  "comfort_patient_education_remotely": zod.string().nullish(),
+  "internet_at_workplace": zod.string(),
+  "power_reliability": zod.string(),
+  "device_availability": zod.string(),
+  "private_space_for_calls": zod.string(),
+  "facility_support": zod.string(),
+  "barrier_liability": zod.string(),
+  "barrier_privacy": zod.string(),
+  "barrier_patient_digital_literacy": zod.string(),
+  "barrier_language": zod.string(),
+  "barrier_technical_failure": zod.string(),
+  "barrier_effectiveness": zod.string(),
+  "other_barriers": zod.string().nullish(),
+  "other_barriers_text": zod.string().nullish(),
+  "received_telehealth_training": zod.string(),
+  "training_needs": zod.string(),
+  "training_format_preference": zod.string(),
+  "willing_to_provide_telehealth": zod.string(),
+  "willing_ncd_telecare": zod.string(),
+  "willing_routine_review": zod.string(),
+  "willing_triage": zod.string(),
+  "preferred_modalities": zod.string(),
+  "willing_prescribe_after_remote": zod.string().nullish(),
+  "willing_remote_monitoring": zod.string().nullish(),
+  "suggestions": zod.string().nullish(),
+  "consent_given": zod.boolean()
+}).and(zod.object({
+  "id": zod.number(),
+  "submitted_at": zod.coerce.date()
+}))
+
+
+/**
+ * @summary List clinician survey responses
+ */
+export const listClinicianSurveysQueryPageDefault = 1;
+export const listClinicianSurveysQueryLimitDefault = 20;
+
+export const ListClinicianSurveysQueryParams = zod.object({
+  "page": zod.coerce.number().default(listClinicianSurveysQueryPageDefault),
+  "limit": zod.coerce.number().default(listClinicianSurveysQueryLimitDefault),
+  "clinical_role": zod.coerce.string().optional(),
+  "department": zod.coerce.string().optional(),
+  "date_from": zod.date().optional(),
+  "date_to": zod.date().optional(),
+  "min_willingness": zod.coerce.number().optional()
+})
+
+export const ListClinicianSurveysResponse = zod.object({
+  "surveys": zod.array(zod.object({
+  "clinical_role": zod.string(),
+  "clinical_role_other": zod.string().nullish(),
+  "department": zod.string(),
+  "department_other": zod.string().nullish(),
+  "years_in_clinical_practice": zod.string(),
+  "years_at_aga_health": zod.string(),
+  "telehealth_exposure_in_role": zod.string(),
+  "heard_of_telehealth": zod.string(),
+  "awareness_sources": zod.string().nullish(),
+  "awareness_sources_other": zod.string().nullish(),
+  "used_telehealth_before": zod.string(),
+  "used_modalities": zod.string().nullish(),
+  "national_policy_awareness": zod.string(),
+  "confidence_video_consultation": zod.string(),
+  "confidence_phone_followup": zod.string(),
+  "confidence_async_messaging": zod.string(),
+  "confidence_remote_vitals": zod.string(),
+  "confidence_digital_documentation": zod.string(),
+  "time_for_telehealth": zod.string(),
+  "documentation_burden_concern": zod.string(),
+  "workflow_integration": zod.string(),
+  "referral_pathway_clarity": zod.string(),
+  "team_coordination": zod.string(),
+  "comfort_clinical_decisions_remotely": zod.string().nullish(),
+  "comfort_patient_education_remotely": zod.string().nullish(),
+  "internet_at_workplace": zod.string(),
+  "power_reliability": zod.string(),
+  "device_availability": zod.string(),
+  "private_space_for_calls": zod.string(),
+  "facility_support": zod.string(),
+  "barrier_liability": zod.string(),
+  "barrier_privacy": zod.string(),
+  "barrier_patient_digital_literacy": zod.string(),
+  "barrier_language": zod.string(),
+  "barrier_technical_failure": zod.string(),
+  "barrier_effectiveness": zod.string(),
+  "other_barriers": zod.string().nullish(),
+  "other_barriers_text": zod.string().nullish(),
+  "received_telehealth_training": zod.string(),
+  "training_needs": zod.string(),
+  "training_format_preference": zod.string(),
+  "willing_to_provide_telehealth": zod.string(),
+  "willing_ncd_telecare": zod.string(),
+  "willing_routine_review": zod.string(),
+  "willing_triage": zod.string(),
+  "preferred_modalities": zod.string(),
+  "willing_prescribe_after_remote": zod.string().nullish(),
+  "willing_remote_monitoring": zod.string().nullish(),
+  "suggestions": zod.string().nullish(),
+  "consent_given": zod.boolean()
+}).and(zod.object({
+  "id": zod.number(),
+  "submitted_at": zod.coerce.date()
+}))),
+  "total": zod.number(),
+  "page": zod.number(),
+  "limit": zod.number()
+})
+
+
+/**
+ * @summary Get clinician survey aggregate statistics
+ */
+export const GetClinicianSurveyStatsQueryParams = zod.object({
+  "clinical_role": zod.coerce.string().optional(),
+  "department": zod.coerce.string().optional(),
+  "date_from": zod.date().optional(),
+  "date_to": zod.date().optional(),
+  "min_willingness": zod.coerce.number().optional()
+})
+
+export const GetClinicianSurveyStatsResponse = zod.object({
+  "total_responses": zod.number(),
+  "clinical_role_breakdown": zod.record(zod.string(), zod.number()),
+  "department_breakdown": zod.record(zod.string(), zod.number()),
+  "willing_ncd_telecare_breakdown": zod.record(zod.string(), zod.number()),
+  "willing_routine_review_breakdown": zod.record(zod.string(), zod.number()),
+  "willing_triage_breakdown": zod.record(zod.string(), zod.number()),
+  "heard_of_telehealth_breakdown": zod.record(zod.string(), zod.number()),
+  "used_telehealth_before_breakdown": zod.record(zod.string(), zod.number()),
+  "training_needs_breakdown": zod.record(zod.string(), zod.number()),
+  "preferred_modalities_breakdown": zod.record(zod.string(), zod.number()),
+  "heard_of_telehealth_rate": zod.number(),
+  "avg_self_efficacy_score": zod.number(),
+  "avg_barrier_score": zod.number(),
+  "avg_facility_readiness_score": zod.number(),
+  "avg_willingness_score": zod.number(),
+  "willingness_breakdown": zod.record(zod.string(), zod.number())
+})
+
+
+/**
+ * @summary Export clinician survey responses as CSV
+ */
+export const ExportClinicianSurveysQueryParams = zod.object({
+  "clinical_role": zod.coerce.string().optional(),
+  "department": zod.coerce.string().optional(),
+  "date_from": zod.date().optional(),
+  "date_to": zod.date().optional(),
+  "min_willingness": zod.coerce.number().optional()
+})
+
+export const ExportClinicianSurveysResponse = zod.unknown()
+
+
+/**
+ * @summary Get a single clinician survey response
+ */
+export const GetClinicianSurveyParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetClinicianSurveyResponse = zod.object({
+  "clinical_role": zod.string(),
+  "clinical_role_other": zod.string().nullish(),
+  "department": zod.string(),
+  "department_other": zod.string().nullish(),
+  "years_in_clinical_practice": zod.string(),
+  "years_at_aga_health": zod.string(),
+  "telehealth_exposure_in_role": zod.string(),
+  "heard_of_telehealth": zod.string(),
+  "awareness_sources": zod.string().nullish(),
+  "awareness_sources_other": zod.string().nullish(),
+  "used_telehealth_before": zod.string(),
+  "used_modalities": zod.string().nullish(),
+  "national_policy_awareness": zod.string(),
+  "confidence_video_consultation": zod.string(),
+  "confidence_phone_followup": zod.string(),
+  "confidence_async_messaging": zod.string(),
+  "confidence_remote_vitals": zod.string(),
+  "confidence_digital_documentation": zod.string(),
+  "time_for_telehealth": zod.string(),
+  "documentation_burden_concern": zod.string(),
+  "workflow_integration": zod.string(),
+  "referral_pathway_clarity": zod.string(),
+  "team_coordination": zod.string(),
+  "comfort_clinical_decisions_remotely": zod.string().nullish(),
+  "comfort_patient_education_remotely": zod.string().nullish(),
+  "internet_at_workplace": zod.string(),
+  "power_reliability": zod.string(),
+  "device_availability": zod.string(),
+  "private_space_for_calls": zod.string(),
+  "facility_support": zod.string(),
+  "barrier_liability": zod.string(),
+  "barrier_privacy": zod.string(),
+  "barrier_patient_digital_literacy": zod.string(),
+  "barrier_language": zod.string(),
+  "barrier_technical_failure": zod.string(),
+  "barrier_effectiveness": zod.string(),
+  "other_barriers": zod.string().nullish(),
+  "other_barriers_text": zod.string().nullish(),
+  "received_telehealth_training": zod.string(),
+  "training_needs": zod.string(),
+  "training_format_preference": zod.string(),
+  "willing_to_provide_telehealth": zod.string(),
+  "willing_ncd_telecare": zod.string(),
+  "willing_routine_review": zod.string(),
+  "willing_triage": zod.string(),
+  "preferred_modalities": zod.string(),
+  "willing_prescribe_after_remote": zod.string().nullish(),
+  "willing_remote_monitoring": zod.string().nullish(),
+  "suggestions": zod.string().nullish(),
+  "consent_given": zod.boolean()
+}).and(zod.object({
+  "id": zod.number(),
+  "submitted_at": zod.coerce.date()
+}))
+
+

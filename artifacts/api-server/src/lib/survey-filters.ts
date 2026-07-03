@@ -8,7 +8,7 @@ import {
   type SQL,
 } from "drizzle-orm";
 import type { Request } from "express";
-import { surveysTable, TELEHEALTH_STUDY_SLUG } from "@workspace/db";
+import { telehealthReadinessSurveysTable } from "@workspace/db";
 
 export type SurveyListQuery = {
   page?: number;
@@ -54,27 +54,35 @@ export function buildSurveyWhereClause(
     | "min_willingness"
   >,
 ): SQL | undefined {
-  const conditions: SQL[] = [eq(surveysTable.study_slug, TELEHEALTH_STUDY_SLUG)];
+  const conditions: SQL[] = [];
 
   if (query.employment_type) {
-    conditions.push(eq(surveysTable.employment_type, query.employment_type));
+    conditions.push(
+      eq(telehealthReadinessSurveysTable.employment_type, query.employment_type),
+    );
   }
   if (query.has_ncd) {
-    conditions.push(eq(surveysTable.has_ncd, query.has_ncd));
+    conditions.push(eq(telehealthReadinessSurveysTable.has_ncd, query.has_ncd));
   }
   if (query.work_area) {
-    conditions.push(ilike(surveysTable.work_area, `%${query.work_area}%`));
+    conditions.push(
+      ilike(telehealthReadinessSurveysTable.work_area, `%${query.work_area}%`),
+    );
   }
   if (query.date_from) {
-    conditions.push(gte(surveysTable.submitted_at, new Date(query.date_from)));
+    conditions.push(
+      gte(telehealthReadinessSurveysTable.submitted_at, new Date(query.date_from)),
+    );
   }
   if (query.date_to) {
-    conditions.push(lte(surveysTable.submitted_at, new Date(query.date_to)));
+    conditions.push(
+      lte(telehealthReadinessSurveysTable.submitted_at, new Date(query.date_to)),
+    );
   }
   if (query.min_willingness !== undefined) {
     conditions.push(
       gte(
-        sql`CAST(${surveysTable.willing_to_use_telehealth} AS INTEGER)`,
+        sql`CAST(${telehealthReadinessSurveysTable.willing_to_use_telehealth} AS INTEGER)`,
         query.min_willingness,
       ),
     );

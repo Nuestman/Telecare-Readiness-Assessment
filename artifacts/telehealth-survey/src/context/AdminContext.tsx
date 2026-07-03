@@ -6,8 +6,12 @@ import {
   ReactNode,
   useCallback,
 } from 'react';
-import { useGetAuthMe, getGetAuthMeQueryKey } from '@workspace/api-client-react';
 import { useQueryClient } from '@tanstack/react-query';
+
+type StudyAccess = {
+  slug: string;
+  role: 'viewer' | 'analyst' | 'admin';
+};
 
 interface AdminUser {
   id: number;
@@ -15,35 +19,42 @@ interface AdminUser {
   name: string;
   role: 'viewer' | 'analyst' | 'admin';
   status: 'pending' | 'approved' | 'rejected';
+  studyAccess?: StudyAccess[];
 }
 
 interface AdminContextValue {
   isAuthenticated: boolean;
   isLoading: boolean;
   user: AdminUser | null;
+  studyAccess: StudyAccess[];
+  hasStudyAccess: (slug: string) => boolean;
+  getStudyRole: (slug: string) => StudyAccess['role'] | undefined;
   logout: () => Promise<void>;
   refresh: () => Promise<AdminUser | null>;
 }
 
 const AdminContext = createContext<AdminContextValue | null>(null);
 
+async function fetchAuthMe(): Promise<AdminUser | null> {
+  const res = await fetch('/api/auth/me', { credentials: 'include' });
+  if (!res.ok) return null;
+  return res.json() as Promise<AdminUser>;
+}
+
 export function AdminProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
-  const { data, isLoading, refetch } = useGetAuthMe({
-    query: {
-      queryKey: getGetAuthMeQueryKey(),
-      retry: false,
-      throwOnError: false,
-    },
-  });
-
   const [user, setUser] = useState<AdminUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    const me = await fetchAuthMe();
+    setUser(me);
+    return me;
+  }, []);
 
   useEffect(() => {
-    if (data) {
-      setUser(data as AdminUser);
-    }
-  }, [data]);
+    refresh().finally(() => setIsLoading(false));
+  }, [refresh]);
 
   const logout = useCallback(async () => {
     await fetch('/api/auth/logout', {
@@ -51,18 +62,20 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       credentials: 'include',
     });
     setUser(null);
-    await queryClient.invalidateQueries({ queryKey: getGetAuthMeQueryKey() });
+    await queryClient.invalidateQueries();
   }, [queryClient]);
 
-  const refresh = useCallback(async () => {
-    const result = await refetch();
-    if (result.data) {
-      setUser(result.data as AdminUser);
-      return result.data as AdminUser;
-    }
-    setUser(null);
-    return null;
-  }, [refetch]);
+  const studyAccess = user?.studyAccess ?? [];
+
+  const hasStudyAccess = useCallback(
+    (slug: string) => studyAccess.some((a) => a.slug === slug),
+    [studyAccess],
+  );
+
+  const getStudyRole = useCallback(
+    (slug: string) => studyAccess.find((a) => a.slug === slug)?.role,
+    [studyAccess],
+  );
 
   return (
     <AdminContext.Provider
@@ -70,6 +83,9 @@ export function AdminProvider({ children }: { children: ReactNode }) {
         isAuthenticated: !!user,
         isLoading,
         user,
+        studyAccess,
+        hasStudyAccess,
+        getStudyRole,
         logout,
         refresh,
       }}

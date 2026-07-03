@@ -2,9 +2,8 @@ import { pgTable, serial, text, boolean, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-export const surveysTable = pgTable("surveys", {
+export const telehealthReadinessSurveysTable = pgTable("telehealth_readiness_surveys", {
   id: serial("id").primaryKey(),
-  study_slug: text("study_slug").notNull().default("telehealth-readiness"),
 
   // Section 1: Demographics
   age_group: text("age_group").notNull(),
@@ -58,10 +57,25 @@ export const surveysTable = pgTable("surveys", {
   submitted_at: timestamp("submitted_at").notNull().defaultNow(),
 });
 
-export const insertSurveySchema = createInsertSchema(surveysTable).omit({
+/** @deprecated Use telehealthReadinessSurveysTable */
+export const surveysTable = telehealthReadinessSurveysTable;
+
+export const insertTelehealthReadinessSurveySchema = createInsertSchema(
+  telehealthReadinessSurveysTable,
+).omit({
   id: true,
   submitted_at: true,
 });
 
-export type InsertSurvey = z.infer<typeof insertSurveySchema>;
-export type Survey = typeof surveysTable.$inferSelect;
+/** @deprecated Use insertTelehealthReadinessSurveySchema */
+export const insertSurveySchema = insertTelehealthReadinessSurveySchema;
+
+export type InsertTelehealthReadinessSurvey = z.infer<
+  typeof insertTelehealthReadinessSurveySchema
+>;
+export type TelehealthReadinessSurvey = typeof telehealthReadinessSurveysTable.$inferSelect;
+
+/** @deprecated Use TelehealthReadinessSurvey */
+export type InsertSurvey = InsertTelehealthReadinessSurvey;
+/** @deprecated Use TelehealthReadinessSurvey */
+export type Survey = TelehealthReadinessSurvey;

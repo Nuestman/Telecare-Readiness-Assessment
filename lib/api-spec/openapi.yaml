@@ -422,6 +422,186 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /studies/clinician-telehealth-readiness/status:
+    get:
+      operationId: getClinicianStudyCollectionStatus
+      tags: [clinician-surveys]
+      summary: Clinician study collection window status
+      responses:
+        "200":
+          description: Collection status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CollectionStatus"
+
+  /studies/clinician-telehealth-readiness/surveys:
+    post:
+      operationId: submitClinicianSurvey
+      tags: [clinician-surveys]
+      summary: Submit a clinician survey response
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClinicianSurveyInput"
+      responses:
+        "201":
+          description: Survey submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClinicianSurvey"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    get:
+      operationId: listClinicianSurveys
+      tags: [clinician-surveys]
+      summary: List clinician survey responses
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: clinical_role
+          in: query
+          schema:
+            type: string
+        - name: department
+          in: query
+          schema:
+            type: string
+        - name: date_from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: date_to
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: min_willingness
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of clinician surveys
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClinicianSurveyListResponse"
+
+  /studies/clinician-telehealth-readiness/surveys/stats:
+    get:
+      operationId: getClinicianSurveyStats
+      tags: [clinician-surveys]
+      summary: Get clinician survey aggregate statistics
+      parameters:
+        - name: clinical_role
+          in: query
+          schema:
+            type: string
+        - name: department
+          in: query
+          schema:
+            type: string
+        - name: date_from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: date_to
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: min_willingness
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Aggregate statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClinicianSurveyStats"
+
+  /studies/clinician-telehealth-readiness/surveys/export:
+    get:
+      operationId: exportClinicianSurveys
+      tags: [clinician-surveys]
+      summary: Export clinician survey responses as CSV
+      parameters:
+        - name: clinical_role
+          in: query
+          schema:
+            type: string
+        - name: department
+          in: query
+          schema:
+            type: string
+        - name: date_from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: date_to
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: min_willingness
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: CSV file
+          content:
+            text/csv:
+              schema:
+                type: string
+
+  /studies/clinician-telehealth-readiness/surveys/{id}:
+    get:
+      operationId: getClinicianSurvey
+      tags: [clinician-surveys]
+      summary: Get a single clinician survey response
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Clinician survey response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClinicianSurvey"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -898,6 +1078,255 @@ components:
         avg_technical_concern:
           type: number
         avg_effectiveness_concern:
+          type: number
+        willingness_breakdown:
+          type: object
+          additionalProperties:
+            type: integer
+
+    ClinicianSurveyInput:
+      type: object
+      required:
+        - clinical_role
+        - department
+        - years_in_clinical_practice
+        - years_at_aga_health
+        - telehealth_exposure_in_role
+        - heard_of_telehealth
+        - used_telehealth_before
+        - national_policy_awareness
+        - confidence_video_consultation
+        - confidence_phone_followup
+        - confidence_async_messaging
+        - confidence_remote_vitals
+        - confidence_digital_documentation
+        - time_for_telehealth
+        - documentation_burden_concern
+        - workflow_integration
+        - referral_pathway_clarity
+        - team_coordination
+        - internet_at_workplace
+        - power_reliability
+        - device_availability
+        - private_space_for_calls
+        - facility_support
+        - barrier_liability
+        - barrier_privacy
+        - barrier_patient_digital_literacy
+        - barrier_language
+        - barrier_technical_failure
+        - barrier_effectiveness
+        - received_telehealth_training
+        - training_needs
+        - training_format_preference
+        - willing_to_provide_telehealth
+        - willing_ncd_telecare
+        - willing_routine_review
+        - willing_triage
+        - preferred_modalities
+        - consent_given
+      properties:
+        clinical_role:
+          type: string
+        clinical_role_other:
+          type: ["string", "null"]
+        department:
+          type: string
+        department_other:
+          type: ["string", "null"]
+        years_in_clinical_practice:
+          type: string
+        years_at_aga_health:
+          type: string
+        telehealth_exposure_in_role:
+          type: string
+        heard_of_telehealth:
+          type: string
+        awareness_sources:
+          type: ["string", "null"]
+        awareness_sources_other:
+          type: ["string", "null"]
+        used_telehealth_before:
+          type: string
+        used_modalities:
+          type: ["string", "null"]
+        national_policy_awareness:
+          type: string
+        confidence_video_consultation:
+          type: string
+        confidence_phone_followup:
+          type: string
+        confidence_async_messaging:
+          type: string
+        confidence_remote_vitals:
+          type: string
+        confidence_digital_documentation:
+          type: string
+        time_for_telehealth:
+          type: string
+        documentation_burden_concern:
+          type: string
+        workflow_integration:
+          type: string
+        referral_pathway_clarity:
+          type: string
+        team_coordination:
+          type: string
+        comfort_clinical_decisions_remotely:
+          type: ["string", "null"]
+        comfort_patient_education_remotely:
+          type: ["string", "null"]
+        internet_at_workplace:
+          type: string
+        power_reliability:
+          type: string
+        device_availability:
+          type: string
+        private_space_for_calls:
+          type: string
+        facility_support:
+          type: string
+        barrier_liability:
+          type: string
+        barrier_privacy:
+          type: string
+        barrier_patient_digital_literacy:
+          type: string
+        barrier_language:
+          type: string
+        barrier_technical_failure:
+          type: string
+        barrier_effectiveness:
+          type: string
+        other_barriers:
+          type: ["string", "null"]
+        other_barriers_text:
+          type: ["string", "null"]
+        received_telehealth_training:
+          type: string
+        training_needs:
+          type: string
+        training_format_preference:
+          type: string
+        willing_to_provide_telehealth:
+          type: string
+        willing_ncd_telecare:
+          type: string
+        willing_routine_review:
+          type: string
+        willing_triage:
+          type: string
+        preferred_modalities:
+          type: string
+        willing_prescribe_after_remote:
+          type: ["string", "null"]
+        willing_remote_monitoring:
+          type: ["string", "null"]
+        suggestions:
+          type: ["string", "null"]
+        consent_given:
+          type: boolean
+
+    ClinicianSurvey:
+      allOf:
+        - $ref: "#/components/schemas/ClinicianSurveyInput"
+        - type: object
+          required:
+            - id
+            - submitted_at
+          properties:
+            id:
+              type: integer
+            submitted_at:
+              type: string
+              format: date-time
+
+    ClinicianSurveyListResponse:
+      type: object
+      required:
+        - surveys
+        - total
+        - page
+        - limit
+      properties:
+        surveys:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClinicianSurvey"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    ClinicianSurveyStats:
+      type: object
+      required:
+        - total_responses
+        - clinical_role_breakdown
+        - department_breakdown
+        - willing_ncd_telecare_breakdown
+        - willing_routine_review_breakdown
+        - willing_triage_breakdown
+        - heard_of_telehealth_breakdown
+        - used_telehealth_before_breakdown
+        - training_needs_breakdown
+        - preferred_modalities_breakdown
+        - heard_of_telehealth_rate
+        - avg_self_efficacy_score
+        - avg_barrier_score
+        - avg_facility_readiness_score
+        - avg_willingness_score
+        - willingness_breakdown
+      properties:
+        total_responses:
+          type: integer
+        clinical_role_breakdown:
+          type: object
+          additionalProperties:
+            type: integer
+        department_breakdown:
+          type: object
+          additionalProperties:
+            type: integer
+        willing_ncd_telecare_breakdown:
+          type: object
+          additionalProperties:
+            type: integer
+        willing_routine_review_breakdown:
+          type: object
+          additionalProperties:
+            type: integer
+        willing_triage_breakdown:
+          type: object
+          additionalProperties:
+            type: integer
+        heard_of_telehealth_breakdown:
+          type: object
+          additionalProperties:
+            type: integer
+        used_telehealth_before_breakdown:
+          type: object
+          additionalProperties:
+            type: integer
+        training_needs_breakdown:
+          type: object
+          additionalProperties:
+            type: integer
+        preferred_modalities_breakdown:
+          type: object
+          additionalProperties:
+            type: integer
+        heard_of_telehealth_rate:
+          type: number
+        avg_self_efficacy_score:
+          type: number
+        avg_barrier_score:
+          type: number
+        avg_facility_readiness_score:
+          type: number
+        avg_willingness_score:
           type: number
         willingness_breakdown:
           type: object

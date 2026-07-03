@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useRegisterAdmin } from '@workspace/api-client-react';
 import { useAdmin } from '@/context/AdminContext';
+import { STUDY_SLUG } from '@/studies/telehealth-readiness/paths';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,7 +13,7 @@ type AdminRegisterFormProps = {
 
 export function AdminRegisterForm({ onSuccess, onCancel }: AdminRegisterFormProps) {
   const { refresh } = useAdmin();
-  const registerMutation = useRegisterAdmin();
+  const [submitting, setSubmitting] = useState(false);
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -26,7 +26,20 @@ export function AdminRegisterForm({ onSuccess, onCancel }: AdminRegisterFormProp
     setError('');
     setPendingMessage('');
     try {
-      const user = await registerMutation.mutateAsync({ data: { name, email, password } });
+      setSubmitting(true);
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+          studySlug: STUDY_SLUG,
+        }),
+      });
+      if (!res.ok) throw new Error('register failed');
+      const user = (await res.json()) as { status: string };
       if (user.status === 'pending') {
         setPendingMessage('Registration submitted. An admin will approve your account before you can sign in.');
         return;
@@ -39,6 +52,8 @@ export function AdminRegisterForm({ onSuccess, onCancel }: AdminRegisterFormProp
       onSuccess?.();
     } catch {
       setError('Could not create account. This email may already be registered.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -96,9 +111,9 @@ export function AdminRegisterForm({ onSuccess, onCancel }: AdminRegisterFormProp
           {error}
         </div>
       )}
-      <Button type="submit" className="w-full gap-2" disabled={registerMutation.isPending}>
+      <Button type="submit" className="w-full gap-2" disabled={submitting}>
         <UserPlus className="w-4 h-4" />
-        {registerMutation.isPending ? 'Creating account...' : 'Create account'}
+        {submitting ? 'Creating account...' : 'Create account'}
       </Button>
       {onCancel && (
         <Button type="button" variant="ghost" className="w-full" onClick={onCancel}>

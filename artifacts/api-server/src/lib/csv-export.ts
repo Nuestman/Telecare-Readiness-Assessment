@@ -2,7 +2,6 @@ import type { Survey } from "@workspace/db";
 
 const CSV_COLUMNS: (keyof Survey)[] = [
   "id",
-  "study_slug",
   "submitted_at",
   "age_group",
   "gender",

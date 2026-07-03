@@ -1,5 +1,5 @@
-import { count, eq, sql } from "drizzle-orm";
-import { db, surveysTable, TELEHEALTH_STUDY_SLUG } from "@workspace/db";
+import { count, sql } from "drizzle-orm";
+import { db, telehealthReadinessSurveysTable } from "@workspace/db";
 import type { SQL } from "drizzle-orm";
 import { buildSurveyWhereClause, type SurveyListQuery } from "./survey-filters";
 
@@ -17,13 +17,13 @@ async function fieldBreakdown(
   field: BreakdownField,
   whereClause: SQL | undefined,
 ): Promise<Record<string, number>> {
-  const column = surveysTable[field];
+  const column = telehealthReadinessSurveysTable[field];
   const rows = await db
     .select({
       value: column,
       count: count(),
     })
-    .from(surveysTable)
+    .from(telehealthReadinessSurveysTable)
     .where(whereClause)
     .groupBy(column);
 
@@ -42,7 +42,7 @@ async function rateOf(
 ): Promise<number> {
   const [{ total }] = await db
     .select({ total: count() })
-    .from(surveysTable)
+    .from(telehealthReadinessSurveysTable)
     .where(whereClause);
 
   const totalNum = Number(total);
@@ -50,12 +50,12 @@ async function rateOf(
 
   const matchWhere =
     whereClause !== undefined
-      ? sql`${whereClause} AND ${surveysTable[field]} = ${value}`
-      : sql`${surveysTable.study_slug} = ${TELEHEALTH_STUDY_SLUG} AND ${surveysTable[field]} = ${value}`;
+      ? sql`${whereClause} AND ${telehealthReadinessSurveysTable[field]} = ${value}`
+      : sql`${telehealthReadinessSurveysTable[field]} = ${value}`;
 
   const [{ matched }] = await db
     .select({ matched: count() })
-    .from(surveysTable)
+    .from(telehealthReadinessSurveysTable)
     .where(matchWhere);
 
   return Number(matched) / totalNum;
@@ -76,21 +76,21 @@ export async function computeSurveyStats(
 
   const [{ total }] = await db
     .select({ total: count() })
-    .from(surveysTable)
+    .from(telehealthReadinessSurveysTable)
     .where(whereClause);
 
   const totalNum = Number(total);
 
   const avgWhere =
     whereClause !== undefined
-      ? sql`${whereClause} AND ${surveysTable.willing_to_use_telehealth} ~ '^[0-9]+$'`
-      : sql`${surveysTable.study_slug} = ${TELEHEALTH_STUDY_SLUG} AND ${surveysTable.willing_to_use_telehealth} ~ '^[0-9]+$'`;
+      ? sql`${whereClause} AND ${telehealthReadinessSurveysTable.willing_to_use_telehealth} ~ '^[0-9]+$'`
+      : sql`${telehealthReadinessSurveysTable.willing_to_use_telehealth} ~ '^[0-9]+$'`;
 
   const [{ avgWillingness }] = await db
     .select({
-      avgWillingness: sql<number>`COALESCE(AVG(CAST(${surveysTable.willing_to_use_telehealth} AS INTEGER)), 0)`,
+      avgWillingness: sql<number>`COALESCE(AVG(CAST(${telehealthReadinessSurveysTable.willing_to_use_telehealth} AS INTEGER)), 0)`,
     })
-    .from(surveysTable)
+    .from(telehealthReadinessSurveysTable)
     .where(avgWhere);
 
   const [
@@ -117,17 +117,19 @@ export async function computeSurveyStats(
     rateOf("heard_of_telehealth", "yes", whereClause),
   ]);
 
-  const concernAvg = async (field: "privacy_concern" | "technical_difficulty_concern" | "effectiveness_concern") => {
+  const concernAvg = async (
+    field: "privacy_concern" | "technical_difficulty_concern" | "effectiveness_concern",
+  ) => {
     const concernWhere =
       whereClause !== undefined
-        ? sql`${whereClause} AND ${surveysTable[field]} ~ '^[0-9]+$'`
-        : sql`${surveysTable.study_slug} = ${TELEHEALTH_STUDY_SLUG} AND ${surveysTable[field]} ~ '^[0-9]+$'`;
+        ? sql`${whereClause} AND ${telehealthReadinessSurveysTable[field]} ~ '^[0-9]+$'`
+        : sql`${telehealthReadinessSurveysTable[field]} ~ '^[0-9]+$'`;
 
     const [{ avg }] = await db
       .select({
-        avg: sql<number>`COALESCE(AVG(CAST(${surveysTable[field]} AS INTEGER)), 0)`,
+        avg: sql<number>`COALESCE(AVG(CAST(${telehealthReadinessSurveysTable[field]} AS INTEGER)), 0)`,
       })
-      .from(surveysTable)
+      .from(telehealthReadinessSurveysTable)
       .where(concernWhere);
 
     return Math.round(Number(avg) * 10) / 10;

@@ -1,14 +1,10 @@
 import type { NextFunction, Request, Response } from "express";
 import type { AdminRole } from "@workspace/db";
-
-const ROLE_RANK: Record<AdminRole, number> = {
-  viewer: 1,
-  analyst: 2,
-  admin: 3,
-};
+import { insufficientRoleMessage, ROLE_RANK } from "../lib/role-utils";
+import { isStudySession, studySessionRole } from "./session-kind";
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
-  if (!req.session.userId || !req.session.role) {
+  if (!isStudySession(req)) {
     res.status(401).json({ error: "Unauthorized" });
     return;
   }
@@ -17,12 +13,18 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
 
 export function requireRole(minRole: AdminRole) {
   return (req: Request, res: Response, next: NextFunction) => {
-    if (!req.session.userId || !req.session.role) {
+    const role = req.studyRole ?? studySessionRole(req);
+    if (!isStudySession(req) || !role) {
       res.status(401).json({ error: "Unauthorized" });
       return;
     }
-    if (ROLE_RANK[req.session.role] < ROLE_RANK[minRole]) {
-      res.status(403).json({ error: "Forbidden" });
+    if (ROLE_RANK[role] < ROLE_RANK[minRole]) {
+      res.status(403).json({
+        error: insufficientRoleMessage(minRole, role),
+        code: "insufficient_role",
+        requiredRole: minRole,
+        currentRole: role,
+      });
       return;
     }
     next();

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Redirect } from 'wouter';
 import {
   useListAdminUsers,
   useCreateAdminUser,
@@ -35,8 +34,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useAdmin } from '@/context/AdminContext';
-import { studyPaths } from '@/studies/telehealth-readiness/paths';
-import { formatApiError } from '@/studies/telehealth-readiness/lib/format-api-error';
+import { formatApiError, isPermissionError } from '@/studies/telehealth-readiness/lib/format-api-error';
 import { toast } from '@/hooks/use-toast';
 import { UserPlus, Pencil, Trash2, Check, X, AlertCircle, RefreshCw } from 'lucide-react';
 
@@ -95,11 +93,8 @@ export default function AdminUsersPage() {
   const [formError, setFormError] = useState('');
   const [actionError, setActionError] = useState('');
 
-  if (user?.role !== 'admin') {
-    return <Redirect to={studyPaths.admin} />;
-  }
-
   const users = data?.users ?? [];
+  const permissionDenied = isError && isPermissionError(error);
   const listErrorMessage = isError
     ? formatApiError(error, 'Could not load users. Try again.')
     : '';
@@ -219,12 +214,18 @@ export default function AdminUsersPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-destructive/40 bg-destructive/5 p-4">
             <div className="flex items-start gap-2 text-sm text-destructive">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-              <span>{listErrorMessage}</span>
+              <span>
+                {permissionDenied
+                  ? `${listErrorMessage} Contact a study administrator if you need a role change.`
+                  : listErrorMessage}
+              </span>
             </div>
-            <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={() => refetch()}>
-              <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
-              Retry
-            </Button>
+            {!permissionDenied ? (
+              <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={() => refetch()}>
+                <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
+                Retry
+              </Button>
+            ) : null}
           </div>
         )}
 

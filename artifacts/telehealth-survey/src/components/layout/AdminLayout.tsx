@@ -11,12 +11,40 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { studyPaths, surveyPublicUrl } from "@/studies/telehealth-readiness/paths";
+import { studyPaths as telehealthStudyPaths, STUDY_SLUG as TELEHEALTH_SLUG, surveyPublicUrl as telehealthSurveyPublicUrl } from "@/studies/telehealth-readiness/paths";
 
-function ShareLinkModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+export type AdminLayoutStudyConfig = {
+  studySlug: string;
+  studyPaths: {
+    admin: string;
+    adminReport: string;
+    adminUsers: string;
+    adminLogin: string;
+  };
+  surveyPublicUrl: () => string;
+  shareDescription: string;
+};
+
+const defaultStudyConfig: AdminLayoutStudyConfig = {
+  studySlug: TELEHEALTH_SLUG,
+  studyPaths: telehealthStudyPaths,
+  surveyPublicUrl: telehealthSurveyPublicUrl,
+  shareDescription: "Share this link or QR code with AGA Obuasi mine employees and contractors.",
+};
+
+function ShareLinkModal({
+  open,
+  onClose,
+  surveyUrl,
+  shareDescription,
+}: {
+  open: boolean;
+  onClose: () => void;
+  surveyUrl: string;
+  shareDescription: string;
+}) {
   const [copied, setCopied] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
-  const surveyUrl = surveyPublicUrl();
 
   useEffect(() => {
     if (!open) return;
@@ -51,7 +79,7 @@ function ShareLinkModal({ open, onClose }: { open: boolean; onClose: () => void 
             Share Survey Link
           </DialogTitle>
           <DialogDescription>
-            Share this link or QR code with AGA Obuasi mine employees and contractors.
+            {shareDescription}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 pt-2">
@@ -78,15 +106,23 @@ function ShareLinkModal({ open, onClose }: { open: boolean; onClose: () => void 
   );
 }
 
-export function AdminLayout({ children }: { children: ReactNode }) {
+export function AdminLayout({
+  children,
+  study = defaultStudyConfig,
+}: {
+  children: ReactNode;
+  study?: AdminLayoutStudyConfig;
+}) {
   const [location] = useLocation();
-  const { logout, user } = useAdmin();
+  const { logout, user, getStudyRole } = useAdmin();
+  const studyRole = getStudyRole(study.studySlug);
   const [showShare, setShowShare] = useState(false);
   const [, navigate] = useLocation();
+  const surveyUrl = study.surveyPublicUrl();
 
   const handleLogout = async () => {
     await logout();
-    navigate(studyPaths.adminLogin);
+    navigate(study.studyPaths.adminLogin);
   };
 
   const navClass = (path: string) =>
@@ -108,21 +144,21 @@ export function AdminLayout({ children }: { children: ReactNode }) {
         </div>
 
         <nav className="flex-1 p-4 flex gap-2 md:flex-col overflow-x-auto">
-          <Link href={studyPaths.admin}>
-            <div className={navClass(studyPaths.admin)}>
+          <Link href={study.studyPaths.admin}>
+            <div className={navClass(study.studyPaths.admin)}>
               <LayoutDashboard className="w-4 h-4 shrink-0" />
               Dashboard
             </div>
           </Link>
-          <Link href={studyPaths.adminReport}>
-            <div className={navClass(studyPaths.adminReport)}>
+          <Link href={study.studyPaths.adminReport}>
+            <div className={navClass(study.studyPaths.adminReport)}>
               <FileBarChart className="w-4 h-4 shrink-0" />
               Pilot Report
             </div>
           </Link>
-          {user?.role === 'admin' && (
-            <Link href={studyPaths.adminUsers}>
-              <div className={navClass(studyPaths.adminUsers)}>
+          {studyRole === 'admin' && (
+            <Link href={study.studyPaths.adminUsers}>
+              <div className={navClass(study.studyPaths.adminUsers)}>
                 <Users className="w-4 h-4 shrink-0" />
                 Users
               </div>
@@ -156,7 +192,12 @@ export function AdminLayout({ children }: { children: ReactNode }) {
         <div className="p-6 max-w-6xl mx-auto">{children}</div>
       </main>
 
-      <ShareLinkModal open={showShare} onClose={() => setShowShare(false)} />
+      <ShareLinkModal
+        open={showShare}
+        onClose={() => setShowShare(false)}
+        surveyUrl={surveyUrl}
+        shareDescription={study.shareDescription}
+      />
     </div>
   );
 }

@@ -1,221 +1,216 @@
-# AGA Telehealth Readiness Survey — System Documentation
+# AGA Health Foundation — Research Platform — System Documentation
+
+**Version:** 1.0.0  
+**Last updated:** 2026-07-03
 
 ## 1. Overview
 
-This is a full-stack web application built for the **AGA Health Foundation** (Obuasi mine) research team. It collects anonymous survey responses from mine employees and contractors to assess the readiness and willingness to use telehealth/telecare services for non-communicable disease (NCD) management and routine follow-up care. The system also provides an authenticated admin dashboard for the research team to view responses and aggregate statistics.
+Full-stack web application for the **AGA Health Foundation** (Obuasi Mine, Ghana) research team. It supports:
 
-## 2. Project Structure
+- **Multiple studies** under one platform (hub + per-study artifacts)
+- **Anonymous survey collection** from participants via direct study URLs
+- **Study-team admin** dashboards with role-based access per study
+- **System administration** for study registry, collection windows, and access grants
 
-The project is a `pnpm` monorepo with shared libraries and two main artifacts:
+Study #1 (`telehealth-readiness`) assesses community telehealth readiness. Study #2 (`clinician-telehealth-readiness`) is implemented but registered as `draft` until activated.
+
+## 2. Project structure
 
 ```
 workspace/
 ├── artifacts/
-│   ├── api-server/          # Express API server
-│   └── telehealth-survey/   # React + Vite public/admin web app
+│   ├── api-server/              # Express API server
+│   ├── telehealth-survey/       # React app: hub shell + all study UIs
+│   └── research-hub/            # Stub README — hub code in telehealth-survey/src/platform/
 ├── lib/
-│   ├── api-spec/            # OpenAPI spec + Orval codegen
-│   ├── api-client-react/    # Generated TanStack Query hooks
-│   ├── api-zod/             # Generated Zod schemas for API validation
-│   └── db/                  # Drizzle ORM + PostgreSQL schema
-└── docs/
-    └── system-architecture.md  # This document
+│   ├── api-spec/                # OpenAPI spec + Orval codegen
+│   ├── api-client-react/        # Generated TanStack Query hooks
+│   ├── api-zod/                 # Generated Zod schemas
+│   └── db/                      # Drizzle ORM + PostgreSQL schema
+├── docs/                        # Architecture and platform design
+└── scripts/                     # dev-local.ps1, smoke-api.ps1, restart-api.ps1
 ```
 
-## 3. Technology Stack
+Hub code path: `artifacts/telehealth-survey/src/platform/`  
+Study bundles: `artifacts/telehealth-survey/src/studies/{slug}/`
 
-- **Monorepo / package manager:** pnpm workspaces
+## 3. Technology stack
+
+- **Monorepo:** pnpm workspaces
 - **Runtime:** Node.js 24
 - **Language:** TypeScript 5.9
 - **Frontend:** React 19, Vite, Tailwind CSS, shadcn/ui, TanStack Query, Wouter
 - **Backend:** Express 5, Zod validation
-- **Database:** PostgreSQL + Drizzle ORM + Drizzle Kit
+- **Database:** PostgreSQL + Drizzle ORM
 - **API contract:** OpenAPI 3.1 + Orval codegen
-- **Auth:** Simple shared admin key (`x-admin-key` header)
+- **Auth:** `express-session` + PostgreSQL store; study and system session kinds
 
-## 4. Artifacts & Workflows
+## 4. Artifacts & workflows
 
-| Artifact | Purpose | Workflow |
-|---|---|---|
-| `artifacts/telehealth-survey` | Public survey + admin dashboard | `pnpm --filter @workspace/telehealth-survey run dev` |
-| `artifacts/api-server` | REST API + DB access | `pnpm --filter @workspace/api-server run dev` |
-| `artifacts/mockup-sandbox` | Canvas component preview (unused by default) | `pnpm --filter @workspace/mockup-sandbox run dev` |
+| Artifact | Purpose | Dev command |
+|----------|---------|-------------|
+| `artifacts/telehealth-survey` | Hub + all study UIs | `pnpm run dev` (via root script) |
+| `artifacts/api-server` | REST API + DB access | Started by `scripts/dev-local.ps1` |
+| `artifacts/mockup-sandbox` | Component preview (optional) | `pnpm --filter @workspace/mockup-sandbox run dev` |
 
-The web app is served under the base path configured by Vite (`import.meta.env.BASE_URL`), and API calls are routed to `/api`.
+Root `pnpm run dev` loads `.env`, builds the API, starts it on `PORT` (default 8080), then starts Vite on `TELEHEALTH_PORT` (default 21409).
 
-## 5. Database Schema
+## 5. Database schema
 
-The `surveys` table (`lib/db/src/schema/surveys.ts`) stores every submission with the following logical sections:
+### Platform tables
 
-1. **Demographics:** `age_group`, `gender`, `employment_type`, `contractor_company`, `work_area`, `years_at_aga`
-2. **Health background:** `has_ncd`, `ncd_types`, `other_ncd`, `currently_on_treatment`, `treatment_location`
-3. **Follow-up behaviour:** `attends_followup`, `missed_followup_reasons`, `other_missed_reason`
-4. **Technology access:** `has_smartphone`, `smartphone_usage`, `has_internet`, `internet_quality`, `comfortable_with_video_call`
-5. **Telehealth awareness:** `heard_of_telehealth`, `telehealth_sources`, `used_telehealth_before`
-6. **Readiness & willingness:** `willing_to_use_telehealth`, `preferred_telehealth_mode`, `preferred_telehealth_use`, `willing_for_ncd_telecare`, `willing_for_followup_telecare`
-7. **Concerns:** `privacy_concern`, `technical_difficulty_concern`, `effectiveness_concern`, `other_concerns`
-8. **Open-ended / consent:** `suggestions`, `consent_given`, `submitted_at`
+| Table | Purpose |
+|-------|---------|
+| `studies` | Study registry (slug, status, collection window, metadata) |
+| `system_admins` | Platform operators |
+| `admin_users` | Study-team accounts |
+| `admin_user_study_access` | Per-study role grants (`viewer`, `analyst`, `admin`) |
+| `session` | Express session store |
 
-Multi-select answers are stored as comma-separated strings; all free-text fields are nullable.
+### Per-study response tables
 
-## 6. API Contract
+| Table | Study slug |
+|-------|------------|
+| `telehealth_readiness_surveys` | `telehealth-readiness` |
+| `clinician_telehealth_readiness_surveys` | `clinician-telehealth-readiness` |
 
-Defined in `lib/api-spec/openapi.yaml`. Key endpoints:
-
-| Method | Path | Description | Auth |
-|---|---|---|---|
-| `POST` | `/api/surveys` | Submit a survey response | Public |
-| `GET` | `/api/surveys` | List responses with pagination | Admin key |
-| `GET` | `/api/surveys/stats` | Aggregate statistics | Admin key |
-| `GET` | `/api/surveys/{id}` | Single response detail | Admin key |
-
-The API schema is consumed by two generated libraries:
-- `@workspace/api-zod` — Zod schemas used by the Express server to validate `POST /surveys`.
-- `@workspace/api-client-react` — TanStack Query hooks used by the React app.
-
-### Code generation
+Apply platform migration:
 
 ```bash
-pnpm --filter @workspace/api-spec run codegen
+pnpm db:migrate:platform
 ```
 
-This runs Orval against `openapi.yaml` and regenerates both libraries, then runs a library-wide typecheck.
+Migration also runs on API startup via `ensure-platform-schema.ts`.
 
-## 7. Authentication & Authorization
+## 6. API overview
 
-Admin access uses **email/password login** with server-side sessions (`express-session` + PostgreSQL store).
+### Public
 
-- `POST /api/auth/login` — creates session cookie
-- `POST /api/auth/logout` — destroys session
-- `GET /api/auth/me` — current user
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/healthz` | Health check |
+| `GET` | `/api/studies` | Public study directory (active/paused only) |
+| `POST` | `/api/studies/{slug}/surveys` | Submit survey (per study) |
+| `GET` | `/api/studies/{slug}/status` | Collection open/closed |
 
-Roles:
+### Study team (`sessionKind: "study"`)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/auth/login` | Study-team login |
+| `GET` | `/api/auth/me` | Current user + `studyAccess[]` |
+| `GET` | `/api/studies/{slug}/surveys` | List responses (viewer+) |
+| `GET` | `/api/studies/{slug}/surveys/stats` | Aggregate stats (viewer+) |
+| `GET` | `/api/studies/{slug}/surveys/export` | CSV export (analyst+) |
+| `GET/POST/PATCH/DELETE` | `/api/auth/admin/users` | User management (admin) |
+
+### System admin (`sessionKind: "system"`)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/system/auth/login` | System admin login |
+| `GET` | `/api/system/dashboard` | Platform metrics |
+| `GET/POST/PATCH/DELETE` | `/api/system/studies` | Study registry CRUD |
+| `GET/POST/PATCH/DELETE` | `/api/system/studies/{slug}/access` | Study access grants |
+| `GET` | `/api/system/users` | All study-team users + access |
+| `GET` | `/api/system/health` | System health snapshot |
+| `POST` | `/api/system/health/run-tests` | Run built-in smoke tests |
+
+Legacy paths (`/api/surveys`, etc.) remain as aliases for `telehealth-readiness`.
+
+Full API design: [platform/system-admin.md](./platform/system-admin.md)
+
+## 7. Authentication & authorization
+
+### Session kinds
+
+- **Study session** — study-team login; `sessionKind: "study"`
+- **System session** — platform admin login; `sessionKind: "system"`
+- Legacy sessions (pre-platform) without `sessionKind` are treated as study sessions when `userId` + `role` are present.
+
+### Study roles (per study via `admin_user_study_access`)
 
 | Role | Permissions |
 |------|-------------|
 | `viewer` | Read stats, list, detail |
 | `analyst` | viewer + CSV export |
-| `admin` | analyst + user management (future) |
+| `admin` | analyst + user management for that study |
 
-Bootstrap the first admin at `/studies/telehealth-readiness/admin/register` (one-time; closes after the first account is created). Then use `/admin/login` for all sign-ins.
+Insufficient role returns a descriptive 403 (required role vs current role).
 
-Legacy `x-admin-key` / `ADMIN_KEY` authentication has been removed.
+### Bootstrap
 
-## 8. Frontend Routing
+- **First study admin:** register at `/studies/telehealth-readiness/admin/register` when no approved users exist
+- **System admin:** `SYSTEM_ADMIN_EMAIL` / `SYSTEM_ADMIN_PASSWORD` (or `INITIAL_ADMIN_*` fallback) on first API start when `system_admins` is empty
 
-Managed by Wouter with the artifact base path:
+## 8. Frontend routing
 
-| Path | Purpose | Auth required |
-|---|---|---|
-| `/studies/telehealth-readiness` | Research landing page | No |
-| `/studies/telehealth-readiness/survey` | Multi-step questionnaire | No |
-| `/studies/telehealth-readiness/admin/login` | Admin login | No |
-| `/studies/telehealth-readiness/admin/register` | One-time first admin setup | No (only while no admins exist) |
-| `/studies/telehealth-readiness/admin` | Admin dashboard | Yes |
-| `/studies/telehealth-readiness/admin/report` | Printable pilot report | Yes |
-| `/studies/telehealth-readiness/admin/responses/:id` | Single response detail | Yes |
+| Path | Purpose | Auth |
+|------|---------|------|
+| `/` | Platform landing (study directory) | No |
+| `/studies/telehealth-readiness/*` | Study #1 | Varies |
+| `/studies/clinician-telehealth-readiness/*` | Study #2 (draft) | Varies |
+| `/system/admin/login` | System admin login | No |
+| `/system/admin` | System dashboard | System |
+| `/system/admin/health` | Health + smoke tests | System |
+| `/system/admin/studies` | Study registry | System |
+| `/system/admin/studies/{slug}/access` | Access grants | System |
+| `/system/admin/users` | User overview | System |
 
-Legacy paths (`/`, `/survey`, `/admin`, …) redirect to the canonical study routes.
+Legacy paths (`/survey`, `/admin`, …) redirect to telehealth study routes.
 
-## 9. Survey Flow
+Route guards: `ProtectedStudyAdminRoute` enforces study membership and minimum role before rendering admin pages.
 
-The questionnaire is a single React component (`SurveyPage.tsx`) with 8 sections plus a consent screen:
-
-1. **Informed consent** — must be accepted before any questions.
-2. **Demographics** — age group, gender, employment type (with contractor company name if applicable), department dropdown (with optional manual entry), years at AGA.
-3. **Health background** — NCD status, treatment details.
-4. **Follow-up behaviour** — attendance patterns and reasons for missed visits.
-5. **Technology access** — smartphone/internet access and comfort with video calls (1–5 scale).
-6. **Telehealth awareness** — an introductory paragraph explains telehealth, then asks about prior awareness and usage.
-7. **Readiness & willingness** — Likert scales and preferred modes.
-8. **Concerns** — privacy, technical difficulty, effectiveness (1–5 scales).
-9. **Open-ended** — suggestions.
-
-Multi-step navigation validates the current section before allowing the user to proceed. The form schema is defined locally in `zod`; the actual submission payload is mapped to the API schema before calling `useSubmitSurvey`.
-
-## 10. Admin Dashboard
-
-`AdminDashboard.tsx` displays:
-- Summary cards: total responses, average willingness score, NCD prevalence, smartphone ownership rate.
-- Recent responses table with pagination.
-- A sidebar action to copy the public survey link (`/survey`).
-
-`SurveyDetail.tsx` shows the full response for a single submission.
-
-## 11. Deployment & Environment
-
-Key environment variables:
+## 9. Deployment & environment
 
 | Variable | Used by | Notes |
-|---|---|---|
+|----------|---------|-------|
 | `DATABASE_URL` | `lib/db` | PostgreSQL connection string |
-| `SESSION_SECRET` | `api-server` | Session cookie signing secret |
-| `SURVEY_OPENS_AT` / `SURVEY_CLOSES_AT` | `api-server` | Optional collection window |
+| `SESSION_SECRET` | `api-server` | Session cookie signing |
+| `PORT` | `api-server` | API port (default 8080) |
+| `TELEHEALTH_PORT` | Vite dev | Frontend port (default 21409) |
+| `SYSTEM_ADMIN_EMAIL` / `SYSTEM_ADMIN_PASSWORD` | `api-server` | Bootstrap system admin |
+| `INITIAL_ADMIN_*` | `api-server` | Fallback for system admin bootstrap |
+| `SYSTEM_ADMIN_BOOTSTRAP_ENABLED` | `api-server` | Set `false` after bootstrap |
+| `SURVEY_OPENS_AT` / `SURVEY_CLOSES_AT` | `api-server` | Env fallback for collection window |
 | `CORS_ORIGINS` | `api-server` | Production CORS allowlist |
-
-### One database URL, many environments
-
-The app uses **one** `DATABASE_URL` at runtime. Replit/Neon may show separate **development** and **production** database entries in the UI — those are different connection strings (often different Neon branches).
-
-Schema drift happens when:
-
-1. `pnpm --filter @workspace/db run push` is run locally against the URL in your `.env`, but Replit production uses a **different** secret.
-2. The original Replit deploy only created `surveys`; later pilot work added `admin_users`, `session`, and `study_slug` without pushing to every database.
-
-**Fix:** Run `pnpm --filter @workspace/db run push` once per database you actually use (copy each branch’s connection string into `.env`, push, repeat). For production on Replit, run push in the Replit shell with production `DATABASE_URL` set, or point local `.env` at production temporarily.
-
-Expected tables after a full push: `surveys`, `admin_users`, `session`.
 
 ### Schema changes
 
-Apply schema changes with:
+Use the platform migration for production:
 
 ```bash
-pnpm --filter @workspace/db run push
+pnpm db:migrate:platform
 ```
 
-Use `push-force` only when you intentionally want to drop and recreate columns.
+For local schema iteration only: `pnpm --filter @workspace/db run push`
 
-## 12. Development Commands
+## 10. Development commands
 
 ```bash
-# Install dependencies
 pnpm install
-
-# Typecheck all libraries and apps
 pnpm run typecheck
-
-# Regenerate API clients from OpenAPI
+pnpm run build
+pnpm db:migrate:platform
+pnpm run dev                    # Windows: API + frontend
 pnpm --filter @workspace/api-spec run codegen
-
-# Push DB schema
-pnpm --filter @workspace/db run push
-
-# Restart workflows after changes
-# Use the Workflows tool or Replit UI
 ```
 
-## 13. Common Customization Points
+Windows helpers: `scripts/restart-api.ps1`, `scripts/smoke-api.ps1`
 
-- **Survey questions / copy:** `artifacts/telehealth-survey/src/pages/SurveyPage.tsx`
-- **Landing page copy:** `artifacts/telehealth-survey/src/pages/LandingPage.tsx`
-- **Admin key:** `ADMIN_KEY` env variable; default lives in `artifacts/api-server/src/routes/surveys.ts`
-- **Database schema:** `lib/db/src/schema/surveys.ts` (regenerate API after changes)
-- **API contract:** `lib/api-spec/openapi.yaml` (regenerate clients after changes)
-- **Styling / theme:** `artifacts/telehealth-survey/src/index.css` and Tailwind config
-
-## 14. Known Limitations & Decisions
-
-- **Session-based admin auth** with roles; suitable for a small research team and future research hub.
-- **No PII collected:** Survey is intentionally anonymous. Admin dashboard only sees aggregate and anonymous responses.
-- **Likert values stored as strings:** The 1–5 scales are stored as strings for consistency with other categorical fields; statistics are parsed to integers in the aggregate route.
-- **Multi-select stored as CSV:** Simplifies the relational schema and aggregation logic for this single-table design.
-
-## 15. Troubleshooting
+## 11. Troubleshooting
 
 | Symptom | Likely cause | Fix |
-|---|---|---|
-| Admin dashboard shows empty data | `x-admin-key` header missing or wrong | Check login modal, verify key, inspect network tab |
-| Survey fails to submit | Validation error in payload | Check server logs for Zod error details |
-| Preview blank / 404 | Workflow not running or wrong base path | Restart workflow, ensure Vite uses `PORT` env var |
-| DB schema mismatch | Schema changed but not pushed | Run `pnpm --filter @workspace/db run push` |
+|---------|--------------|-----|
+| API exit on `pnpm run dev` | Port 8080 in use | `scripts/restart-api.ps1` or kill existing process |
+| `DATABASE_URL must be set` | `.env` not loaded | Run via `pnpm run dev`; check `.env` exists |
+| Admin 401 on surveys | Legacy session or wrong session kind | Log out and log in again |
+| Admin 403 on dashboard | No `admin_user_study_access` row | Grant access via `/system/admin` |
+| Users page "Insufficient access" | Role below `admin` | Expected — contact study admin |
+| Study #2 not on hub | Registry status `draft` | Activate via system admin |
+
+## 12. Related documentation
+
+- [platform/README.md](./platform/README.md) — platform design index
+- [hub-roadmap.md](./hub-roadmap.md) — roadmap and phase status
+- [CHANGELOG.md](../CHANGELOG.md) — release history

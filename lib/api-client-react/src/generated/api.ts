@@ -24,12 +24,19 @@ import type {
   AdminUserPublic,
   AuthLogoutOk,
   AuthUser,
+  ClinicianSurvey,
+  ClinicianSurveyInput,
+  ClinicianSurveyListResponse,
+  ClinicianSurveyStats,
   CollectionStatus,
   CreateAdminUserInput,
   ErrorResponse,
+  ExportClinicianSurveysParams,
   ExportSurveysParams,
+  GetClinicianSurveyStatsParams,
   GetSurveyStatsParams,
   HealthStatus,
+  ListClinicianSurveysParams,
   ListSurveysParams,
   LoginInput,
   RegisterInput,
@@ -1187,6 +1194,482 @@ export function useGetSurvey<TData = Awaited<ReturnType<typeof getSurvey>>, TErr
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetSurveyQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetClinicianStudyCollectionStatusUrl = () => {
+
+
+
+
+  return `/api/studies/clinician-telehealth-readiness/status`
+}
+
+/**
+ * @summary Clinician study collection window status
+ */
+export const getClinicianStudyCollectionStatus = async ( options?: RequestInit): Promise<CollectionStatus> => {
+
+  return customFetch<CollectionStatus>(getGetClinicianStudyCollectionStatusUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetClinicianStudyCollectionStatusQueryKey = () => {
+    return [
+    `/api/studies/clinician-telehealth-readiness/status`
+    ] as const;
+    }
+
+
+export const getGetClinicianStudyCollectionStatusQueryOptions = <TData = Awaited<ReturnType<typeof getClinicianStudyCollectionStatus>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getClinicianStudyCollectionStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetClinicianStudyCollectionStatusQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getClinicianStudyCollectionStatus>>> = ({ signal }) => getClinicianStudyCollectionStatus({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getClinicianStudyCollectionStatus>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetClinicianStudyCollectionStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getClinicianStudyCollectionStatus>>>
+export type GetClinicianStudyCollectionStatusQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Clinician study collection window status
+ */
+
+export function useGetClinicianStudyCollectionStatus<TData = Awaited<ReturnType<typeof getClinicianStudyCollectionStatus>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getClinicianStudyCollectionStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetClinicianStudyCollectionStatusQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSubmitClinicianSurveyUrl = () => {
+
+
+
+
+  return `/api/studies/clinician-telehealth-readiness/surveys`
+}
+
+/**
+ * @summary Submit a clinician survey response
+ */
+export const submitClinicianSurvey = async (clinicianSurveyInput: ClinicianSurveyInput, options?: RequestInit): Promise<ClinicianSurvey> => {
+
+  return customFetch<ClinicianSurvey>(getSubmitClinicianSurveyUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(clinicianSurveyInput)
+  }
+);}
+
+
+
+
+export const getSubmitClinicianSurveyMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitClinicianSurvey>>, TError,{data: BodyType<ClinicianSurveyInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof submitClinicianSurvey>>, TError,{data: BodyType<ClinicianSurveyInput>}, TContext> => {
+
+const mutationKey = ['submitClinicianSurvey'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof submitClinicianSurvey>>, {data: BodyType<ClinicianSurveyInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  submitClinicianSurvey(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SubmitClinicianSurveyMutationResult = NonNullable<Awaited<ReturnType<typeof submitClinicianSurvey>>>
+    export type SubmitClinicianSurveyMutationBody = BodyType<ClinicianSurveyInput>
+    export type SubmitClinicianSurveyMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Submit a clinician survey response
+ */
+export const useSubmitClinicianSurvey = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitClinicianSurvey>>, TError,{data: BodyType<ClinicianSurveyInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof submitClinicianSurvey>>,
+        TError,
+        {data: BodyType<ClinicianSurveyInput>},
+        TContext
+      > => {
+      return useMutation(getSubmitClinicianSurveyMutationOptions(options));
+    }
+
+export const getListClinicianSurveysUrl = (params?: ListClinicianSurveysParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/studies/clinician-telehealth-readiness/surveys?${stringifiedParams}` : `/api/studies/clinician-telehealth-readiness/surveys`
+}
+
+/**
+ * @summary List clinician survey responses
+ */
+export const listClinicianSurveys = async (params?: ListClinicianSurveysParams, options?: RequestInit): Promise<ClinicianSurveyListResponse> => {
+
+  return customFetch<ClinicianSurveyListResponse>(getListClinicianSurveysUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListClinicianSurveysQueryKey = (params?: ListClinicianSurveysParams,) => {
+    return [
+    `/api/studies/clinician-telehealth-readiness/surveys`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListClinicianSurveysQueryOptions = <TData = Awaited<ReturnType<typeof listClinicianSurveys>>, TError = ErrorType<unknown>>(params?: ListClinicianSurveysParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listClinicianSurveys>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListClinicianSurveysQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listClinicianSurveys>>> = ({ signal }) => listClinicianSurveys(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listClinicianSurveys>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListClinicianSurveysQueryResult = NonNullable<Awaited<ReturnType<typeof listClinicianSurveys>>>
+export type ListClinicianSurveysQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List clinician survey responses
+ */
+
+export function useListClinicianSurveys<TData = Awaited<ReturnType<typeof listClinicianSurveys>>, TError = ErrorType<unknown>>(
+ params?: ListClinicianSurveysParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listClinicianSurveys>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListClinicianSurveysQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetClinicianSurveyStatsUrl = (params?: GetClinicianSurveyStatsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/studies/clinician-telehealth-readiness/surveys/stats?${stringifiedParams}` : `/api/studies/clinician-telehealth-readiness/surveys/stats`
+}
+
+/**
+ * @summary Get clinician survey aggregate statistics
+ */
+export const getClinicianSurveyStats = async (params?: GetClinicianSurveyStatsParams, options?: RequestInit): Promise<ClinicianSurveyStats> => {
+
+  return customFetch<ClinicianSurveyStats>(getGetClinicianSurveyStatsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetClinicianSurveyStatsQueryKey = (params?: GetClinicianSurveyStatsParams,) => {
+    return [
+    `/api/studies/clinician-telehealth-readiness/surveys/stats`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetClinicianSurveyStatsQueryOptions = <TData = Awaited<ReturnType<typeof getClinicianSurveyStats>>, TError = ErrorType<unknown>>(params?: GetClinicianSurveyStatsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getClinicianSurveyStats>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetClinicianSurveyStatsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getClinicianSurveyStats>>> = ({ signal }) => getClinicianSurveyStats(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getClinicianSurveyStats>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetClinicianSurveyStatsQueryResult = NonNullable<Awaited<ReturnType<typeof getClinicianSurveyStats>>>
+export type GetClinicianSurveyStatsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get clinician survey aggregate statistics
+ */
+
+export function useGetClinicianSurveyStats<TData = Awaited<ReturnType<typeof getClinicianSurveyStats>>, TError = ErrorType<unknown>>(
+ params?: GetClinicianSurveyStatsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getClinicianSurveyStats>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetClinicianSurveyStatsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getExportClinicianSurveysUrl = (params?: ExportClinicianSurveysParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/studies/clinician-telehealth-readiness/surveys/export?${stringifiedParams}` : `/api/studies/clinician-telehealth-readiness/surveys/export`
+}
+
+/**
+ * @summary Export clinician survey responses as CSV
+ */
+export const exportClinicianSurveys = async (params?: ExportClinicianSurveysParams, options?: RequestInit): Promise<string> => {
+
+  return customFetch<string>(getExportClinicianSurveysUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getExportClinicianSurveysQueryKey = (params?: ExportClinicianSurveysParams,) => {
+    return [
+    `/api/studies/clinician-telehealth-readiness/surveys/export`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getExportClinicianSurveysQueryOptions = <TData = Awaited<ReturnType<typeof exportClinicianSurveys>>, TError = ErrorType<unknown>>(params?: ExportClinicianSurveysParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof exportClinicianSurveys>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getExportClinicianSurveysQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof exportClinicianSurveys>>> = ({ signal }) => exportClinicianSurveys(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof exportClinicianSurveys>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ExportClinicianSurveysQueryResult = NonNullable<Awaited<ReturnType<typeof exportClinicianSurveys>>>
+export type ExportClinicianSurveysQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Export clinician survey responses as CSV
+ */
+
+export function useExportClinicianSurveys<TData = Awaited<ReturnType<typeof exportClinicianSurveys>>, TError = ErrorType<unknown>>(
+ params?: ExportClinicianSurveysParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof exportClinicianSurveys>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getExportClinicianSurveysQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetClinicianSurveyUrl = (id: number,) => {
+
+
+
+
+  return `/api/studies/clinician-telehealth-readiness/surveys/${id}`
+}
+
+/**
+ * @summary Get a single clinician survey response
+ */
+export const getClinicianSurvey = async (id: number, options?: RequestInit): Promise<ClinicianSurvey> => {
+
+  return customFetch<ClinicianSurvey>(getGetClinicianSurveyUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetClinicianSurveyQueryKey = (id: number,) => {
+    return [
+    `/api/studies/clinician-telehealth-readiness/surveys/${id}`
+    ] as const;
+    }
+
+
+export const getGetClinicianSurveyQueryOptions = <TData = Awaited<ReturnType<typeof getClinicianSurvey>>, TError = ErrorType<ErrorResponse>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getClinicianSurvey>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetClinicianSurveyQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getClinicianSurvey>>> = ({ signal }) => getClinicianSurvey(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getClinicianSurvey>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetClinicianSurveyQueryResult = NonNullable<Awaited<ReturnType<typeof getClinicianSurvey>>>
+export type GetClinicianSurveyQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Get a single clinician survey response
+ */
+
+export function useGetClinicianSurvey<TData = Awaited<ReturnType<typeof getClinicianSurvey>>, TError = ErrorType<ErrorResponse>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getClinicianSurvey>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetClinicianSurveyQueryOptions(id,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

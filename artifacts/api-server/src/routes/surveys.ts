@@ -1,13 +1,12 @@
 import { Router } from "express";
-import { db, surveysTable, TELEHEALTH_STUDY_SLUG } from "@workspace/db";
-import { desc, count, eq, and } from "drizzle-orm";
+import { db, telehealthReadinessSurveysTable, studiesTable, TELEHEALTH_STUDY_SLUG } from "@workspace/db";
+import { desc, count, eq } from "drizzle-orm";
 import { SubmitSurveyBody } from "@workspace/api-zod";
 import { requireAuth, requireRole } from "../middleware/auth";
 import { surveySubmitLimiter } from "../middleware/rate-limit";
-import {
-  assertCollectionOpen,
-  validateSubmissionTiming,
-} from "../lib/study-window";
+import { validateSubmissionTiming } from "../lib/study-window";
+import { assertStudyCollectionOpen } from "../lib/study-collection";
+import { requireStudyAccess } from "../middleware/study-access";
 import {
   buildSurveyWhereClause,
   parseSurveyListQuery,
@@ -19,7 +18,22 @@ const router = Router();
 
 function registerSurveyRoutes(target: Router) {
   target.post("/surveys", surveySubmitLimiter, async (req, res) => {
-    const collection = assertCollectionOpen();
+    let study = req.study;
+    if (!study) {
+      const [row] = await db
+        .select()
+        .from(studiesTable)
+        .where(eq(studiesTable.slug, TELEHEALTH_STUDY_SLUG))
+        .limit(1);
+      study = row;
+    }
+
+    if (!study || study.slug !== TELEHEALTH_STUDY_SLUG) {
+      res.status(404).json({ error: "Study not found" });
+      return;
+    }
+
+    const collection = assertStudyCollectionOpen(study);
     if (!collection.ok) {
       res.status(403).json({ error: collection.message });
       return;
@@ -46,9 +60,8 @@ function registerSurveyRoutes(target: Router) {
     const data = parsed.data;
 
     const [survey] = await db
-      .insert(surveysTable)
+      .insert(telehealthReadinessSurveysTable)
       .values({
-        study_slug: TELEHEALTH_STUDY_SLUG,
         age_group: data.age_group,
         gender: data.gender,
         employment_type: data.employment_type,
@@ -88,7 +101,7 @@ function registerSurveyRoutes(target: Router) {
     res.status(201).json(survey);
   });
 
-  target.get("/surveys", requireAuth, async (req, res) => {
+  target.get("/surveys", requireStudyAccess("viewer"), requireAuth, async (req, res) => {
     const query = parseSurveyListQuery(req);
     const offset = ((query.page ?? 1) - 1) * (query.limit ?? 20);
     const whereClause = buildSurveyWhereClause(query);
@@ -96,12 +109,12 @@ function registerSurveyRoutes(target: Router) {
     const [surveys, [{ count: total }]] = await Promise.all([
       db
         .select()
-        .from(surveysTable)
+        .from(telehealthReadinessSurveysTable)
         .where(whereClause)
-        .orderBy(desc(surveysTable.submitted_at))
+        .orderBy(desc(telehealthReadinessSurveysTable.submitted_at))
         .limit(query.limit ?? 20)
         .offset(offset),
-      db.select({ count: count() }).from(surveysTable).where(whereClause),
+      db.select({ count: count() }).from(telehealthReadinessSurveysTable).where(whereClause),
     ]);
 
     res.json({
@@ -112,21 +125,21 @@ function registerSurveyRoutes(target: Router) {
     });
   });
 
-  target.get("/surveys/stats", requireAuth, async (req, res) => {
+  target.get("/surveys/stats", requireStudyAccess("viewer"), requireAuth, async (req, res) => {
     const query = parseSurveyListQuery(req);
     const stats = await computeSurveyStats(query);
     res.json(stats);
   });
 
-  target.get("/surveys/export", requireRole("analyst"), async (req, res) => {
+  target.get("/surveys/export", requireStudyAccess("analyst"), async (req, res) => {
     const query = parseSurveyListQuery(req);
     const whereClause = buildSurveyWhereClause(query);
 
     const surveys = await db
       .select()
-      .from(surveysTable)
+      .from(telehealthReadinessSurveysTable)
       .where(whereClause)
-      .orderBy(desc(surveysTable.submitted_at));
+      .orderBy(desc(telehealthReadinessSurveysTable.submitted_at));
 
     const csv = surveysToCsv(surveys);
     const filename = `telehealth-readiness-export-${new Date().toISOString().slice(0, 10)}.csv`;
@@ -136,19 +149,19 @@ function registerSurveyRoutes(target: Router) {
     res.send(csv);
   });
 
-  target.get("/surveys/:id", requireAuth, async (req, res) => {
+  target.get("/surveys/:id", requireStudyAccess("viewer"), requireAuth, async (req, res) => {
     const id = parseInt(String(req.params.id), 10);
     if (Number.isNaN(id)) {
       res.status(400).json({ error: "Invalid survey ID" });
       return;
     }
 
-    const whereClause = and(
-      eq(surveysTable.id, id),
-      eq(surveysTable.study_slug, TELEHEALTH_STUDY_SLUG),
-    );
+    const whereClause = eq(telehealthReadinessSurveysTable.id, id);
 
-    const [survey] = await db.select().from(surveysTable).where(whereClause);
+    const [survey] = await db
+      .select()
+      .from(telehealthReadinessSurveysTable)
+      .where(whereClause);
 
     if (!survey) {
       res.status(404).json({ error: "Survey not found" });

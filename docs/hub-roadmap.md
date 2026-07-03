@@ -1,8 +1,10 @@
 # AGA Health Foundation — Research Hub Roadmap
 
-**Status:** Vision / not implemented  
-**Last updated:** 2026-06-29  
-**Prerequisite:** Telehealth readiness pilot improvements complete ([pilot-improvement-plan.md](./pilot-improvement-plan.md))
+**Status:** v1.0.0 implemented — see [platform/](./platform/) and [CHANGELOG.md](../CHANGELOG.md)  
+**Last updated:** 2026-07-03  
+**Decisions:** [platform/decisions.md](./platform/decisions.md)
+
+> **Detailed design:** [docs/platform/](./platform/README.md)
 
 ---
 
@@ -11,113 +13,72 @@
 A **single hospital-facing platform** where AGA Health Foundation staff can:
 
 - Discover active and past research studies
-- Enroll participants or share study links
+- Share study links with participants
 - Access study-specific admin dashboards and reports
-- Manage access with **one hospital login**, not per-study secrets
-
-The **telehealth readiness survey** is the **first study module**, not the whole platform.
+- Manage access with study-scoped roles and system-level administration
 
 ---
 
-## 2. What exists today (pilot)
+## 2. What exists today (v1.0.0)
 
-| Component | Role |
-|-----------|------|
-| `artifacts/telehealth-survey` | Public survey + admin UI for one study |
-| `artifacts/api-server` | REST API + database access |
-| `surveys` table | Responses for telehealth readiness only |
-| Shared admin key → **moving to session auth in pilot Phase 2** | Temporary |
-
----
-
-## 3. Target hub architecture
-
-```mermaid
-flowchart TB
-  subgraph hub [ResearchHub]
-    Portal[Hub portal / study directory]
-    Auth[Shared hospital auth]
-    Registry[Study registry]
-  end
-
-  subgraph studies [StudyModules]
-    TH[telehealth-readiness]
-    S2[future study B]
-    S3[future study C]
-  end
-
-  Portal --> Registry
-  Portal --> Auth
-  Registry --> TH
-  Registry --> S2
-  Registry --> S3
-  TH --> API[Shared or per-study API]
-  S2 --> API
-  S3 --> API
-```
-
-### Likely building blocks (when hub work starts)
-
-| Piece | Description |
-|-------|-------------|
-| `artifacts/research-hub` | Shell app: study directory, hospital branding, global nav |
-| Study modules | One folder/artifact per study (start by extracting telehealth patterns) |
-| `studies` registry table | `slug`, `title`, `status`, `opens_at`, `closes_at`, `pi_name`, `ethics_ref` |
-| Shared auth | Extend pilot `admin_users` to hub-level roles + study-scoped permissions |
-| Per-study data | Separate tables or `study_slug` partition (pilot adds `study_slug` early) |
+| Component | Role | Status |
+|-----------|------|--------|
+| `artifacts/telehealth-survey/src/platform/` | Hub shell: `/`, system admin | **Implemented** |
+| `artifacts/telehealth-survey/src/studies/telehealth-readiness/` | Study #1 UI | **Active** |
+| `artifacts/telehealth-survey/src/studies/clinician-telehealth-readiness/` | Study #2 UI | **Implemented (draft)** |
+| `artifacts/api-server` | REST API + platform routes | **Implemented** |
+| `studies` registry table | Study metadata + collection windows | **Implemented** |
+| `telehealth_readiness_surveys` | Study #1 responses | **Migrated** |
+| `clinician_telehealth_readiness_surveys` | Study #2 responses | **Implemented** |
+| `artifacts/research-hub` | Physical artifact split | **Deferred** |
 
 ---
 
-## 4. Principles for getting there without rework
+## 3. Phase completion
 
-These are **why** the pilot improvement plan namespaces under `telehealth-readiness`:
-
-1. **Study slug everywhere** — routes, API paths, DB `study_slug` column.
-2. **Config-driven study metadata** — ethics, PI, dates in config/registry, not hardcoded in components.
-3. **Auth that can grow** — session + roles in pilot become hub auth; avoid new per-study keys.
-4. **Export and audit from day one** — named users and export logs before hub scales.
-5. **Do not extract shared libraries until study #2** — avoid premature abstraction.
+| Phase | Deliverable | Status |
+|-------|-------------|--------|
+| H1 | Hub shell + study directory at `/` | Done |
+| H2 | Study registry in DB; telehealth under hub routes | Done |
+| H3 | Clinician study artifact + DB table | Done (draft status) |
+| H4 | Study-scoped permissions; system admin access UI | Done |
+| H5 | Cross-study reporting for leadership | Not started |
+| H6 | Physical `research-hub` artifact extraction | Deferred |
+| H7 | Hospital SSO evaluation | Not started |
 
 ---
 
-## 5. Explicitly out of scope until hub phase
+## 4. Principles (unchanged)
 
-- Multi-study participant portal at hospital root URL
+1. **Study slug everywhere** — routes, API paths; one responses table per study.
+2. **Config-driven study metadata** — registry + per-study config files.
+3. **Auth that scales** — `admin_users` + `admin_user_study_access` + `system_admins`.
+4. **Export and audit** — named users, role-based export.
+5. **Defer abstraction** — shared libraries extracted only when needed.
+
+---
+
+## 5. Out of scope (still)
+
 - Study creation wizard for non-technical staff
-- Cross-study analytics (“all AGA research 2026”)
-- Integration with hospital EMR / patient records
+- Cross-study analytics dashboard
+- EMR integration
 - SMS/WhatsApp recruitment pipelines
-- Bilingual (English + local language) platform shell
-- Automated scheduled reports to leadership
+- Bilingual platform shell
+- Automated leadership reports
 
 ---
 
-## 6. Suggested hub phases (future)
+## 6. Resolved decisions
 
-| Phase | Deliverable |
-|-------|-------------|
-| H1 | Hub shell + study directory page listing telehealth readiness |
-| H2 | Study registry in DB; telehealth module mounted under hub routes |
-| H3 | Second study module (validates extraction pattern) |
-| H4 | Study-scoped permissions; hospital SSO evaluation |
-| H5 | Cross-study reporting for research leadership |
-
-**Do not start H1 until the telehealth pilot is signed off by the hospital** ([presentation checklist](./pilot-improvement-plan.md#10-hospital-presentation-checklist-all-phases)).
+See [platform/decisions.md](./platform/decisions.md).
 
 ---
 
-## 7. Open questions (resolve before hub build)
-
-1. Will each study keep its **own database table** or share one `responses` table with `study_slug`?
-2. Should participants see a **hospital research home page** or only direct study links?
-3. Who **creates new studies** — IT only, or research coordinators via UI?
-4. Is **Ghana Data Protection Act** compliance review required at hub scale?
-5. Hosting: stay on Replit, move to hospital-managed cloud, or hybrid?
-
----
-
-## 8. Change log
+## 7. Change log
 
 | Date | Change |
 |------|--------|
-| 2026-06-29 | Initial roadmap stub created alongside pilot improvement plan |
+| 2026-06-29 | Initial roadmap stub |
+| 2026-07-02 | Decisions resolved; design pack in `docs/platform/` |
+| 2026-07-03 | v1.0.0 platform implementation shipped |
