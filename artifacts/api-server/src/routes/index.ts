@@ -9,6 +9,8 @@ import publicStudiesRouter from "./public-studies";
 import systemAuthRouter from "./system-auth";
 import systemHealthRouter from "./system-health";
 import systemStudiesRouter from "./system-studies";
+import prospectusRouter from "./prospectus";
+import systemProspectusRouter from "./system-prospectus";
 import { resolveStudy } from "../middleware/study-access";
 import {
   db,
@@ -25,6 +27,8 @@ router.use(publicStudiesRouter);
 router.use(systemAuthRouter);
 router.use(systemHealthRouter);
 router.use(systemStudiesRouter);
+router.use(prospectusRouter);
+router.use(systemProspectusRouter);
 router.use(authRouter);
 router.use(adminUsersRouter);
 router.use(legacyStudyStatusRouter);

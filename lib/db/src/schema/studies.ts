@@ -1,5 +1,6 @@
-import { index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { boolean, index, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import type { StudyStatus } from "../constants";
+import { prospectusSubmissionsTable } from "./prospectus-submissions";
 
 export const studiesTable = pgTable(
   "studies",
@@ -19,10 +20,18 @@ export const studiesTable = pgTable(
     status: text("status").notNull().$type<StudyStatus>().default("draft"),
     opens_at: timestamp("opens_at", { withTimezone: true }),
     closes_at: timestamp("closes_at", { withTimezone: true }),
+    prospectus_id: integer("prospectus_id").references(() => prospectusSubmissionsTable.id, {
+      onDelete: "restrict",
+    }),
+    /** Pre-prospectus studies grandfathered without linked prospectus */
+    prospectus_exempt: boolean("prospectus_exempt").notNull().default(false),
     created_at: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updated_at: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [index("studies_status_idx").on(table.status)],
+  (table) => [
+    index("studies_status_idx").on(table.status),
+    index("studies_prospectus_id_idx").on(table.prospectus_id),
+  ],
 );
 
 export type Study = typeof studiesTable.$inferSelect;

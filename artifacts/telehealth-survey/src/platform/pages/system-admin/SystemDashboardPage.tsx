@@ -20,7 +20,7 @@ export default function SystemDashboardPage() {
   return (
     <SystemAdminLayout>
       <h1 className="text-2xl font-semibold mb-6">Dashboard</h1>
-      <div className="grid gap-4 sm:grid-cols-3 mb-8">
+      <div className="grid gap-4 sm:grid-cols-4 mb-8">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Studies</CardTitle>
@@ -39,7 +39,21 @@ export default function SystemDashboardPage() {
           </CardHeader>
           <CardContent className="text-2xl font-bold">{dashboard?.totalResponses ?? '—'}</CardContent>
         </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Pending prospectuses</CardTitle>
+          </CardHeader>
+          <CardContent className="text-2xl font-bold">{dashboard?.pendingProspectuses ?? '—'}</CardContent>
+        </Card>
       </div>
+
+      {typeof dashboard?.pendingProspectuses === 'number' && dashboard.pendingProspectuses > 0 && (
+        <div className="mb-8">
+          <Button asChild variant="outline" size="sm">
+            <Link href={systemAdminPaths.prospectus}>Review prospectuses</Link>
+          </Button>
+        </div>
+      )}
 
       <div className="space-y-3">
         <h2 className="font-medium">Studies</h2>

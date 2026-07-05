@@ -4,6 +4,9 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { AdminProvider } from '@/context/AdminContext';
 import { SystemAdminProvider, useSystemAdmin } from '@/platform/context/SystemAdminContext';
 import PlatformLandingPage from '@/platform/pages/PlatformLandingPage';
+import ProspectusLandingPage from '@/platform/pages/prospectus/ProspectusLandingPage';
+import ProspectusFormPage from '@/platform/pages/prospectus/ProspectusFormPage';
+import ProspectusStatusPage from '@/platform/pages/prospectus/ProspectusStatusPage';
 import SystemLoginPage from '@/platform/pages/system-admin/SystemLoginPage';
 import SystemDashboardPage from '@/platform/pages/system-admin/SystemDashboardPage';
 import SystemHealthPage from '@/platform/pages/system-admin/SystemHealthPage';
@@ -11,7 +14,9 @@ import StudiesListPage from '@/platform/pages/system-admin/StudiesListPage';
 import StudyEditPage from '@/platform/pages/system-admin/StudyEditPage';
 import StudyAccessPage from '@/platform/pages/system-admin/StudyAccessPage';
 import SystemUsersPage from '@/platform/pages/system-admin/SystemUsersPage';
-import { systemAdminPaths, platformPaths } from '@/platform/paths';
+import ProspectusQueuePage from '@/platform/pages/system-admin/ProspectusQueuePage';
+import ProspectusDetailPage from '@/platform/pages/system-admin/ProspectusDetailPage';
+import { systemAdminPaths, platformPaths, prospectusPaths } from '@/platform/paths';
 import { telehealthStudyRouteElements } from '@/studies/telehealth-readiness/study-routes';
 import { clinicianStudyRouteElements } from '@/studies/clinician-telehealth-readiness/study-routes';
 import { studyPaths as telehealthStudyPaths } from '@/studies/telehealth-readiness/paths';
@@ -31,6 +36,9 @@ function HubRouter() {
   return (
     <Switch>
       <Route path={platformPaths.landing} component={PlatformLandingPage} />
+      <Route path={prospectusPaths.landing} component={ProspectusLandingPage} />
+      <Route path={prospectusPaths.new} component={ProspectusFormPage} />
+      <Route path="/research/prospectus/:publicId" component={ProspectusStatusPage} />
       <Route path={platformPaths.studies}><Redirect to={platformPaths.landing} /></Route>
 
       <Route path={systemAdminPaths.login} component={SystemLoginPage} />
@@ -51,6 +59,12 @@ function HubRouter() {
       </Route>
       <Route path={systemAdminPaths.users}>
         {() => <ProtectedSystemRoute component={SystemUsersPage} />}
+      </Route>
+      <Route path={systemAdminPaths.prospectus}>
+        {() => <ProtectedSystemRoute component={ProspectusQueuePage} />}
+      </Route>
+      <Route path="/system/admin/prospectus/:id">
+        {() => <ProtectedSystemRoute component={ProspectusDetailPage} />}
       </Route>
 
       {/* Legacy telehealth URLs (pre multi-study paths) */}

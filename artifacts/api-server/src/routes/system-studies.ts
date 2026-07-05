@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { count, eq, and } from "drizzle-orm";
+import { count, eq, and, inArray } from "drizzle-orm";
 import { z } from "zod";
 import {
   db,
@@ -7,10 +7,12 @@ import {
   adminUsersTable,
   adminUserStudyAccessTable,
   telehealthReadinessSurveysTable,
+  prospectusSubmissionsTable,
   type StudyStatus,
 } from "@workspace/db";
 import { requireSystemAuth } from "../middleware/system-auth";
 import { getStudyCollectionStatus } from "../lib/study-collection";
+import { assertStudyMayActivate } from "../middleware/require-approved-prospectus";
 
 const router = Router();
 
@@ -62,6 +64,8 @@ function toPublicStudy(study: typeof studiesTable.$inferSelect) {
     status: study.status,
     opensAt: study.opens_at?.toISOString() ?? null,
     closesAt: study.closes_at?.toISOString() ?? null,
+    prospectusId: study.prospectus_id,
+    prospectusExempt: study.prospectus_exempt,
     collectionOpen: collection.is_open,
     createdAt: study.created_at.toISOString(),
     updatedAt: study.updated_at.toISOString(),
@@ -76,10 +80,22 @@ router.get("/system/dashboard", requireSystemAuth, async (_req, res) => {
     .select({ total: count() })
     .from(telehealthReadinessSurveysTable);
 
+  const pendingProspectuses = await db
+    .select({ total: count() })
+    .from(prospectusSubmissionsTable)
+    .where(
+      inArray(prospectusSubmissionsTable.status, [
+        "submitted",
+        "under_review",
+        "revision_requested",
+      ]),
+    );
+
   res.json({
     studyCount: allStudies.length,
     activeStudies,
     totalResponses: Number(telehealthCount),
+    pendingProspectuses: Number(pendingProspectuses[0]?.total ?? 0),
     responsesByStudy: [
       { slug: "telehealth-readiness", count: Number(telehealthCount) },
     ],
@@ -178,7 +194,23 @@ router.patch("/system/studies/:slug", requireSystemAuth, async (req, res) => {
   if (data.contact_phone !== undefined) updates.contact_phone = data.contact_phone;
   if (data.data_retention !== undefined) updates.data_retention = data.data_retention;
   if (data.estimated_minutes !== undefined) updates.estimated_minutes = data.estimated_minutes;
-  if (data.status !== undefined) updates.status = data.status;
+  if (data.status !== undefined) {
+    if (data.status === "active") {
+      const [current] = await db
+        .select()
+        .from(studiesTable)
+        .where(eq(studiesTable.slug, slug))
+        .limit(1);
+      if (current) {
+        const gate = await assertStudyMayActivate(current);
+        if (!gate.ok) {
+          res.status(409).json({ error: gate.error });
+          return;
+        }
+      }
+    }
+    updates.status = data.status;
+  }
   if (data.opens_at !== undefined) {
     updates.opens_at = data.opens_at ? new Date(data.opens_at) : null;
   }

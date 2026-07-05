@@ -1,8 +1,12 @@
 /**
  * Idempotent platform schema migration (push → migrate transition).
- * Run: pnpm --filter @workspace/db run migrate:platform
+ * Run: pnpm db:migrate:platform  (from repo root; loads .env automatically)
  */
-import { pool } from "../src/index.ts";
+import { loadRootEnv } from "./load-root-env.ts";
+
+loadRootEnv();
+
+const { pool } = await import("../src/index.ts");
 
 const SQL = `
 CREATE TABLE IF NOT EXISTS studies (

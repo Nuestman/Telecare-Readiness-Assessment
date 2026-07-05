@@ -16,3 +16,4 @@ export const db = drizzle(pool, { schema });
 export * from "./schema";
 export * from "./constants";
 export * from "./study-tables";
+export * from "./prospectus-template";

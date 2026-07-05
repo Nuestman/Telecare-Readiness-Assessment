@@ -1,7 +1,7 @@
 # Platform — Database Schema Design
 
-**Status:** Design (pre-implementation)  
-**Last updated:** 2026-07-02  
+**Status:** Implemented  
+**Last updated:** 2026-07-05  
 **Decisions:** [decisions.md](./decisions.md) — **one table per study**
 
 ---
@@ -94,6 +94,26 @@ Unchanged from prior design — platform operators.
 ### 3.3 `admin_user_study_access`
 
 Unchanged — junction for study-team access per slug.
+
+### 3.4 Prospectus tables (research intake)
+
+See [research-prospectus.md](./research-prospectus.md).
+
+| Table | Purpose |
+|-------|---------|
+| `prospectus_submissions` | Prospectus content + workflow status |
+| `prospectus_reviews` | Review comments / revision requests |
+| `prospectus_approvals` | Dual approval (`research_leadership`, `platform_ops`) |
+| `prospectus_attachments` | Vercel Blob file metadata |
+
+**`studies` additions:**
+
+| Column | Notes |
+|--------|-------|
+| `prospectus_id` | FK → `prospectus_submissions.id`; required for new non-exempt studies |
+| `prospectus_exempt` | `true` for studies created before prospectus gate |
+
+Migration: `pnpm db:migrate:prospectus`
 
 ---
 

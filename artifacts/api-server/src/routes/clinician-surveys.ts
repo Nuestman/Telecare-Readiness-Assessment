@@ -11,6 +11,7 @@ import { requireAuth } from "../middleware/auth";
 import { surveySubmitLimiter } from "../middleware/rate-limit";
 import { validateSubmissionTiming } from "../lib/study-window";
 import { assertStudyCollectionOpen } from "../lib/study-collection";
+import { assertStudyMayActivate } from "../middleware/require-approved-prospectus";
 import { requireStudyAccess } from "../middleware/study-access";
 import {
   buildClinicianSurveyWhereClause,
@@ -41,6 +42,12 @@ function registerClinicianSurveyRoutes(target: Router) {
     const collection = assertStudyCollectionOpen(study);
     if (!collection.ok) {
       res.status(403).json({ error: collection.message });
+      return;
+    }
+
+    const prospectusGate = await assertStudyMayActivate(study);
+    if (!prospectusGate.ok) {
+      res.status(403).json({ error: prospectusGate.error });
       return;
     }
 

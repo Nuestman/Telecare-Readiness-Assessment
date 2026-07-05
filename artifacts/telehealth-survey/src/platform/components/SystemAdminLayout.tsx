@@ -24,6 +24,9 @@ export function SystemAdminLayout({ children }: { children: React.ReactNode }) {
             <Button asChild variant="outline" size="sm">
               <Link href={systemAdminPaths.studies}>Studies</Link>
             </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href={systemAdminPaths.prospectus}>Prospectuses</Link>
+            </Button>
             <Button variant="ghost" size="sm" onClick={() => logout()}>
               Log out
             </Button>

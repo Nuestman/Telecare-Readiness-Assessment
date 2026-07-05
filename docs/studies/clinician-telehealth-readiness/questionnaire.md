@@ -126,9 +126,9 @@ Field names below are **proposed API/DB column names** (snake_case).
 | ID | Field | Type | Question | Required | Options |
 |----|-------|------|----------|----------|---------|
 | 2.1 | `heard_of_telehealth` | single | Before today, had you heard of telehealth or telecare? | Yes | `yes`, `no`, `not_sure` |
-| 2.2 | `awareness_sources` | multi | Where did you learn about telehealth? (Select all that apply) | If 2.1 = `yes` | `workplace_training`, `colleague`, `conference`, `media`, `patient_request`, `covid_period`, `professional_body`, `other` |
+| 2.2 | `awareness_sources` | multi | Where did you learn about telehealth? (Select all that apply) | If 2.1 = `yes` | `workplace_training`, `colleague`, `conference`, `media`, `patient_request`, `covid_period`, `professional_education`, `other` |
 | 2.2a | `awareness_sources_other` | text | Other source | If `other` selected | Optional |
-| 2.3 | `used_telehealth_before` | single | Have you personally used telehealth to care for patients (video, phone, or messaging)? | Yes | `never`, `during_covid_only`, `occasionally_since`, `regularly` |
+| 2.3 | `used_telehealth_before` | single | Have you personally used telehealth to care for patients (video, phone, or messaging)? | Yes | `never`, `during_covid_only`, `occasionally`, `regularly` |
 | 2.4 | `used_modalities` | multi | Which modalities have you used? | If 2.3 ≠ `never` | `phone_voice`, `video_call`, `sms_whatsapp`, `patient_portal`, `remote_monitoring`, `other` |
 | 2.5 | `national_policy_awareness` | single | Are you aware of any national guidance on telemedicine or digital health in Ghana (e.g. Ministry of Health, NHIA)? | Yes | `yes`, `no`, `not_sure` |
 

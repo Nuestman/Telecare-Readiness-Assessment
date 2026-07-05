@@ -1,6 +1,6 @@
 {
   "name": "@workspace/db",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "exports": {
@@ -11,6 +11,7 @@
     "push": "drizzle-kit push --config ./drizzle.config.ts",
     "push-force": "drizzle-kit push --force --config ./drizzle.config.ts",
     "migrate:platform": "tsx ./scripts/apply-platform-migration.ts",
+    "migrate:prospectus": "tsx ./scripts/apply-prospectus-migration.ts",
     "generate": "drizzle-kit generate --config ./drizzle.config.ts",
     "migrate": "drizzle-kit migrate --config ./drizzle.config.ts"
   },

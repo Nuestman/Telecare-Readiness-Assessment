@@ -5,3 +5,7 @@ export * from "./sessions";
 export * from "./studies";
 export * from "./system-admins";
 export * from "./admin-user-study-access";
+export * from "./prospectus-submissions";
+export * from "./prospectus-reviews";
+export * from "./prospectus-approvals";
+export * from "./prospectus-attachments";

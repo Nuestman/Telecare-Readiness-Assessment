@@ -16,6 +16,10 @@ tags:
     description: Study collection status
   - name: surveys
     description: Telehealth readiness survey submission and retrieval
+  - name: prospectus
+    description: Research prospectus intake (public)
+  - name: system-prospectus
+    description: Research prospectus review and dual approval (system admin)
 paths:
   /healthz:
     get:
@@ -601,6 +605,265 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+
+  /prospectus/template:
+    get:
+      operationId: getProspectusTemplate
+      tags: [prospectus]
+      summary: Prospectus form template and field help
+      responses:
+        "200":
+          description: Template JSON
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /prospectus:
+    post:
+      operationId: createProspectus
+      tags: [prospectus]
+      summary: Create draft prospectus
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProspectusInput"
+      responses:
+        "201":
+          description: Draft created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProspectusPublic"
+
+  /prospectus/{publicId}:
+    get:
+      operationId: getProspectus
+      tags: [prospectus]
+      summary: Get prospectus by public token
+      parameters:
+        - name: publicId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Prospectus
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProspectusPublic"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: patchProspectus
+      tags: [prospectus]
+      summary: Update draft or revision-requested prospectus
+      parameters:
+        - name: publicId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchProspectusInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProspectusPublic"
+
+  /prospectus/{publicId}/submit:
+    post:
+      operationId: submitProspectus
+      tags: [prospectus]
+      summary: Submit prospectus for review
+      parameters:
+        - name: publicId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProspectusPublic"
+
+  /prospectus/{publicId}/withdraw:
+    post:
+      operationId: withdrawProspectus
+      tags: [prospectus]
+      summary: Withdraw prospectus
+      parameters:
+        - name: publicId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Withdrawn
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProspectusPublic"
+
+  /prospectus/{publicId}/attachments:
+    post:
+      operationId: uploadProspectusAttachment
+      tags: [prospectus]
+      summary: Upload supporting document (Vercel Blob)
+      parameters:
+        - name: publicId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProspectusAttachmentUploadInput"
+      responses:
+        "201":
+          description: Uploaded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProspectusAttachmentMeta"
+
+  /system/prospectus:
+    get:
+      operationId: listSystemProspectuses
+      tags: [system-prospectus]
+      summary: List all prospectuses (system admin)
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/ProspectusStatus"
+      responses:
+        "200":
+          description: List
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProspectusListResponse"
+
+  /system/prospectus/{id}:
+    get:
+      operationId: getSystemProspectus
+      tags: [system-prospectus]
+      summary: Prospectus detail with reviews
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProspectusDetailResponse"
+
+  /system/prospectus/{id}/reviews:
+    post:
+      operationId: addProspectusReview
+      tags: [system-prospectus]
+      summary: Add review comment or request revision
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProspectusReviewInput"
+      responses:
+        "201":
+          description: Review recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProspectusDetailResponse"
+
+  /system/prospectus/{id}/approve:
+    post:
+      operationId: recordProspectusApproval
+      tags: [system-prospectus]
+      summary: Record dual-approval decision (research_leadership or platform_ops)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProspectusApprovalInput"
+      responses:
+        "200":
+          description: Approval recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProspectusDetailResponse"
+
+  /system/prospectus/{id}/provision-study:
+    post:
+      operationId: provisionStudyFromProspectus
+      tags: [system-prospectus]
+      summary: Create draft studies row after dual approval
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProvisionStudyFromProspectusInput"
+      responses:
+        "201":
+          description: Study provisioned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProvisionStudyResult"
 
 components:
   schemas:
@@ -1332,3 +1595,204 @@ components:
           type: object
           additionalProperties:
             type: integer
+
+    ProspectusStatus:
+      type: string
+      enum:
+        - draft
+        - submitted
+        - under_review
+        - revision_requested
+        - approved
+        - rejected
+        - withdrawn
+
+    ProspectusApprovalRole:
+      type: string
+      enum:
+        - research_leadership
+        - platform_ops
+
+    CreateProspectusInput:
+      type: object
+      required: [submitterEmail, submitterName]
+      properties:
+        submitterEmail:
+          type: string
+          format: email
+        submitterName:
+          type: string
+        title:
+          type: string
+        principalInvestigator:
+          type: string
+
+    PatchProspectusInput:
+      type: object
+      properties:
+        title:
+          type: string
+        researchProblem:
+          type: string
+        proposedSlug:
+          type: string
+        studyTemplate:
+          type: string
+          enum: [telehealth-readiness-clone, clinician-clone, custom]
+
+    ProspectusApprovalSlot:
+      type: object
+      required: [role, decision, comments, decidedAt]
+      properties:
+        role:
+          $ref: "#/components/schemas/ProspectusApprovalRole"
+        decision:
+          type: ["string", "null"]
+          enum: [approved, rejected, null]
+        comments:
+          type: ["string", "null"]
+        decidedAt:
+          type: ["string", "null"]
+          format: date-time
+
+    ProspectusPublic:
+      type: object
+      required: [publicId, status, submitterEmail, submitterName]
+      properties:
+        id:
+          type: integer
+        publicId:
+          type: string
+          format: uuid
+        status:
+          $ref: "#/components/schemas/ProspectusStatus"
+        submitterEmail:
+          type: string
+        submitterName:
+          type: string
+        title:
+          type: string
+        principalInvestigator:
+          type: string
+        proposedSlug:
+          type: ["string", "null"]
+        studyTemplate:
+          type: string
+        linkedStudySlug:
+          type: ["string", "null"]
+        approvals:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProspectusApprovalSlot"
+        attachmentCount:
+          type: integer
+
+    ProspectusListItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        publicId:
+          type: string
+        status:
+          $ref: "#/components/schemas/ProspectusStatus"
+        title:
+          type: string
+        submitterName:
+          type: string
+        submitterEmail:
+          type: string
+        proposedSlug:
+          type: ["string", "null"]
+        linkedStudySlug:
+          type: ["string", "null"]
+
+    ProspectusListResponse:
+      type: object
+      required: [prospectuses]
+      properties:
+        prospectuses:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProspectusListItem"
+
+    ProspectusDetailResponse:
+      type: object
+      required: [prospectus, reviews]
+      properties:
+        prospectus:
+          $ref: "#/components/schemas/ProspectusPublic"
+        reviews:
+          type: array
+          items:
+            type: object
+
+    ProspectusReviewInput:
+      type: object
+      required: [decision, comments]
+      properties:
+        decision:
+          type: string
+          enum: [comment, revision_requested]
+        comments:
+          type: string
+        isInternal:
+          type: boolean
+
+    ProspectusApprovalInput:
+      type: object
+      required: [approvalRole, decision]
+      properties:
+        approvalRole:
+          $ref: "#/components/schemas/ProspectusApprovalRole"
+        decision:
+          type: string
+          enum: [approved, rejected]
+        comments:
+          type: string
+
+    ProvisionStudyFromProspectusInput:
+      type: object
+      properties:
+        slug:
+          type: string
+        responsesTable:
+          type: string
+        shortTitle:
+          type: string
+
+    ProvisionStudyResult:
+      type: object
+      properties:
+        slug:
+          type: string
+        prospectusId:
+          type: integer
+        message:
+          type: string
+
+    ProspectusAttachmentUploadInput:
+      type: object
+      required: [filename, mimeType, contentBase64]
+      properties:
+        filename:
+          type: string
+        mimeType:
+          type: string
+        contentBase64:
+          type: string
+
+    ProspectusAttachmentMeta:
+      type: object
+      properties:
+        id:
+          type: integer
+        filename:
+          type: string
+        mimeType:
+          type: string
+        sizeBytes:
+          type: integer
+        uploadedAt:
+          type: string
+          format: date-time

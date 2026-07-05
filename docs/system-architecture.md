@@ -1,7 +1,7 @@
 # AGA Health Foundation — Research Platform — System Documentation
 
-**Version:** 1.0.0  
-**Last updated:** 2026-07-03
+**Version:** 1.1.0  
+**Last updated:** 2026-07-05
 
 ## 1. Overview
 
@@ -174,14 +174,20 @@ Route guards: `ProtectedStudyAdminRoute` enforces study membership and minimum r
 | `SYSTEM_ADMIN_BOOTSTRAP_ENABLED` | `api-server` | Set `false` after bootstrap |
 | `SURVEY_OPENS_AT` / `SURVEY_CLOSES_AT` | `api-server` | Env fallback for collection window |
 | `CORS_ORIGINS` | `api-server` | Production CORS allowlist |
+| `BLOB_READ_WRITE_TOKEN` | `api-server` | Vercel Blob storage for prospectus attachments |
+
+Prospectus workflow: [platform/research-prospectus.md](./platform/research-prospectus.md)
 
 ### Schema changes
 
-Use the platform migration for production:
+Platform and prospectus migrations (production):
 
 ```bash
 pnpm db:migrate:platform
+pnpm db:migrate:prospectus
 ```
+
+Both load root `.env` automatically. Prospectus schema also applies on API startup via `ensure-prospectus-schema.ts`.
 
 For local schema iteration only: `pnpm --filter @workspace/db run push`
 
@@ -192,6 +198,7 @@ pnpm install
 pnpm run typecheck
 pnpm run build
 pnpm db:migrate:platform
+pnpm db:migrate:prospectus
 pnpm run dev                    # Windows: API + frontend
 pnpm --filter @workspace/api-spec run codegen
 ```

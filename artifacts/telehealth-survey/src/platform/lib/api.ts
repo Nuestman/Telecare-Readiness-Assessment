@@ -95,6 +95,7 @@ export function fetchSystemDashboard() {
     studyCount: number;
     activeStudies: number;
     totalResponses: number;
+    pendingProspectuses: number;
     responsesByStudy: { slug: string; count: number }[];
   }>('/api/system/dashboard');
 }

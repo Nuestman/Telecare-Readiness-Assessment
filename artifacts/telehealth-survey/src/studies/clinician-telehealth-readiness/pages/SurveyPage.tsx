@@ -654,8 +654,8 @@ export default function SurveyPage() {
                         <FormControl>
                           <CardRadioGroup
                             options={[
-                              { label: "Medical officer / doctor", value: "medical_officer" },
-                              { label: "Nurse or midwife", value: "nurse_midwife" },
+                              { label: "Medical officer", value: "medical_officer" },
+                              { label: "Nurse or Midwife", value: "nurse_midwife" },
                               { label: "Allied health (pharmacy, lab, physio, etc.)", value: "allied_health" },
                               { label: "Other clinical role", value: "other_clinical" },
                             ]}
@@ -708,13 +708,13 @@ export default function SurveyPage() {
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="opd">Outpatient (OPD)</SelectItem>
-                              <SelectItem value="ncd_clinic">NCD clinic</SelectItem>
-                              <SelectItem value="emergency">Emergency / urgent care</SelectItem>
+                              <SelectItem value="ncd_clinic">NCD clinic (Diabetes Clinic)</SelectItem>
+                              <SelectItem value="emergency">Emergency</SelectItem>
                               <SelectItem value="inpatient">Inpatient</SelectItem>
                               <SelectItem value="maternity">Maternity</SelectItem>
                               <SelectItem value="pharmacy">Pharmacy</SelectItem>
                               <SelectItem value="laboratory">Laboratory</SelectItem>
-                              <SelectItem value="community_health">Community health</SelectItem>
+                              <SelectItem value="community_health">RCH/Community health</SelectItem>
                               <SelectItem value="other">Other (specify below)</SelectItem>
                             </SelectContent>
                           </Select>
@@ -888,7 +888,7 @@ export default function SurveyPage() {
                                   { label: "Media", value: "media" },
                                   { label: "Patient request", value: "patient_request" },
                                   { label: "COVID period", value: "covid_period" },
-                                  { label: "Professional body", value: "professional_body" },
+                                  { label: "Professional body", value: "professional_education" },
                                   { label: "Other", value: "other" },
                                 ]}
                                 value={field.value || []}
@@ -930,7 +930,7 @@ export default function SurveyPage() {
                             options={[
                               { label: "Never", value: "never" },
                               { label: "During COVID only", value: "during_covid_only" },
-                              { label: "Occasionally since", value: "occasionally_since" },
+                              { label: "Occasionally", value: "occasionally" },
                               { label: "Regularly", value: "regularly" },
                             ]}
                             value={field.value}

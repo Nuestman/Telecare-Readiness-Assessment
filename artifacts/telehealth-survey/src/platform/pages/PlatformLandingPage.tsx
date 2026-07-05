@@ -3,6 +3,9 @@ import { platformConfig } from '@/platform/config';
 import { PlatformFooter } from '@/platform/components/PlatformFooter';
 import { StudyCard } from '@/platform/components/StudyCard';
 import { fetchPublicStudies } from '@/platform/lib/api';
+import { prospectusPaths } from '@/platform/paths';
+import { Button } from '@/components/ui/button';
+import { Link } from 'wouter';
 
 export default function PlatformLandingPage() {
   const { data, isLoading, error } = useQuery({
@@ -25,6 +28,17 @@ export default function PlatformLandingPage() {
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-10">
+        <div className="mb-8 rounded-lg border bg-card p-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="font-medium">Planning new research?</p>
+            <p className="text-sm text-muted-foreground">
+              Submit a research prospectus before starting data collection.
+            </p>
+          </div>
+          <Button asChild variant="outline" size="sm">
+            <Link href={prospectusPaths.landing}>Research prospectus</Link>
+          </Button>
+        </div>
         {isLoading && <p className="text-muted-foreground">Loading studies…</p>}
         {error && (
           <p className="text-destructive">Could not load studies. Check that the API is running.</p>

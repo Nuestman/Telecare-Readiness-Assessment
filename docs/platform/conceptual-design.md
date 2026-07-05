@@ -1,7 +1,7 @@
 # Platform — Conceptual Design
 
-**Status:** Implemented (v1.0.0)  
-**Last updated:** 2026-07-03  
+**Status:** Implemented (v1.1.0)  
+**Last updated:** 2026-07-05  
 **Decisions:** [decisions.md](./decisions.md)
 
 ---

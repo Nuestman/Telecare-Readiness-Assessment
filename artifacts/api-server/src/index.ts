@@ -3,6 +3,7 @@ import { logger } from "./lib/logger";
 import { ensureBootstrapAdminApproved } from "./lib/ensure-admin-users";
 import { ensureSessionTable } from "./lib/ensure-session-table";
 import { ensurePlatformSchema } from "./lib/ensure-platform-schema";
+import { ensureProspectusSchema } from "./lib/ensure-prospectus-schema";
 import { ensureBootstrapSystemAdmin } from "./lib/ensure-system-admin";
 
 const rawPort = process.env["PORT"];
@@ -21,6 +22,7 @@ if (Number.isNaN(port) || port <= 0) {
 
 await ensureSessionTable();
 await ensurePlatformSchema();
+await ensureProspectusSchema();
 await ensureBootstrapAdminApproved();
 await ensureBootstrapSystemAdmin();
 

@@ -1,6 +1,6 @@
 {
   "name": "workspace",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "license": "MIT",
   "scripts": {
     "preinstall": "node -e \"const ua=process.env.npm_config_user_agent||''; if(!ua.includes('pnpm')){console.error('Use pnpm instead'); process.exit(1)} try{require('fs').unlinkSync('package-lock.json')}catch{} try{require('fs').unlinkSync('yarn.lock')}catch{}\"",
@@ -8,7 +8,8 @@
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
-    "db:migrate:platform": "pnpm --filter @workspace/db run migrate:platform"
+    "db:migrate:platform": "pnpm --filter @workspace/db run migrate:platform",
+    "db:migrate:prospectus": "pnpm --filter @workspace/db run migrate:prospectus"
   },
   "private": true,
   "devDependencies": {

@@ -1,6 +1,7 @@
 # Platform — System Admin APIs & UI
 
-**Status:** Implemented (v1.0.0)  
+**Status:** Implemented (v1.1.0)  
+**Last updated:** 2026-07-05  
 **Last updated:** 2026-07-03
 
 ---
@@ -328,7 +329,25 @@ If zero approved users exist globally, first registrant becomes `admin` and rece
 
 ---
 
-## 10. Implementation checklist
+## 10. Prospectus review (v1.1.0)
+
+System admins review submitted research prospectuses before new studies can be provisioned.
+
+| UI | API |
+|----|-----|
+| `/system/admin/prospectus` — queue | `GET /api/system/prospectus` |
+| `/system/admin/prospectus/:id` — detail | `GET /api/system/prospectus/:id` |
+| Comment / request revision | `POST /api/system/prospectus/:id/reviews` |
+| Dual approve / reject | `POST /api/system/prospectus/:id/approve` |
+| Create draft study row | `POST /api/system/prospectus/:id/provision-study` |
+
+**Dual approval roles:** `research_leadership` and `platform_ops` (both required). Full workflow: [research-prospectus.md](./research-prospectus.md).
+
+Nav: prospectus link on system dashboard and `SystemAdminLayout` sidebar.
+
+---
+
+## 11. Implementation checklist
 
 - [x] `system_admins` table + bootstrap on startup
 - [x] Session `sessionKind` field + type augmentation
@@ -341,14 +360,16 @@ If zero approved users exist globally, first registrant becomes `admin` and rece
 - [x] System admin pages (login, dashboard, studies, access, users, health)
 - [x] Built-in smoke tests at `/api/system/health/run-tests`
 - [x] Update `.env.example`
+- [x] Prospectus review UI + `/api/system/prospectus/*`
 - [ ] OpenAPI + codegen for all system routes
 
 ---
 
-## 11. Change log
+## 12. Change log
 
 | Date | Change |
 |------|--------|
 | 2026-07-02 | Initial system admin design |
 | 2026-07-02 | Study-scoped registration; IT-only study creation |
 | 2026-07-03 | v1.0.0 implementation; health page; built-in smoke tests; `INITIAL_ADMIN_*` fallback |
+| 2026-07-05 | v1.1.0 prospectus review queue and dual-approval UI |

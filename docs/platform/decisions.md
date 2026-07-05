@@ -1,7 +1,7 @@
 # Platform — Resolved Decisions
 
 **Status:** Approved  
-**Last updated:** 2026-07-02
+**Last updated:** 2026-07-05
 
 Authoritative record of decisions made before implementation. Supersedes “open questions” in [hub-roadmap.md](../hub-roadmap.md) and [conceptual-design.md](./conceptual-design.md).
 
@@ -45,6 +45,7 @@ Authoritative record of decisions made before implementation. Supersedes “open
 | B2 | **`paused` studies on public list** | Show with “Temporarily unavailable” badge; no survey CTA. |
 | B3 | **`draft` studies** | Visible to system admin only; never on public `GET /api/studies`. |
 | B4 | **Branding** | Platform `/`: AGA Health Foundation. Study pages: study-specific copy. |
+| G1 | **Research prospectus gate** | Every new study requires dual-approved prospectus before activation. Vercel Blob for attachments. See [research-prospectus.md](./research-prospectus.md). |
 
 ---
 
@@ -54,3 +55,5 @@ Authoritative record of decisions made before implementation. Supersedes “open
 |------|--------|
 | 2026-07-02 | Initial decisions recorded from stakeholder review |
 | 2026-07-03 | v1.0.0 platform implementation shipped |
+| 2026-07-04 | G1 prospectus gate — dual approval, Vercel Blob, schema |
+| 2026-07-05 | v1.1.0 prospectus UI shipped — manual save, co-investigator roles, attachment upload |
