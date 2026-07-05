@@ -1,6 +1,7 @@
 import { Link } from 'wouter';
 import { platformConfig } from '@/platform/config';
 import { systemAdminPaths } from '@/platform/paths';
+import { platformVersionLabel } from '@/platform/version';
 
 export function PlatformFooter() {
   return (
@@ -13,7 +14,9 @@ export function PlatformFooter() {
           Platform administration
         </Link>
       </div>
-      <p>© {platformConfig.organization}</p>
+      <p>
+        © {platformConfig.organization} · Platform {platformVersionLabel}
+      </p>
     </footer>
   );
 }
